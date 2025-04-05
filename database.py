@@ -17,12 +17,15 @@ c.execute("""
         profile_pic TEXT,
         bio TEXT,
         gender TEXT,
+        sexuality TEXT,
+        show_sexuality INTEGER DEFAULT 0,
+        show_gender INTEGER DEFAULT 1,
         interests TEXT,
         main_tag TEXT,
         tags TEXT,
         latitude REAL,
         longitude REAL,
-         email_verified INTEGER DEFAULT 0
+        email_verified INTEGER DEFAULT 0
     )
 """)
 

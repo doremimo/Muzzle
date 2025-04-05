@@ -93,8 +93,8 @@ def signup():
                 INSERT INTO users (
                     username, password, display_name, age, location,
                     favorite_animal, dog_free_reason, profile_pic, bio,
-                    gender, interests, main_tag, tags
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    gender, sexuality, show_gender, show_sexuality, interests, main_tag, tags
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 username, hashed_password, display_name, age, location,
                 favorite_animal, dog_free_reason, "", bio, gender, interests,
@@ -372,12 +372,14 @@ def settings():
         location = request.form.get("location", "")
         favorite_animal = request.form.get("favorite_animal", "")
         dog_free_reason = request.form.get("dog_free_reason", "")
-        bio = request.form.get("bio", "")
-        gender = request.form.get("gender", "")
         interests = request.form.get("interests", "")
         main_tag = request.form.get("main_tag", "")
         tags = request.form.getlist("tags")
         tags_string = ",".join(tags)
+        gender = request.form.get("gender", "")
+        sexuality = request.form.get("sexuality", "")
+        show_gender = 1 if request.form.get("show_gender") == "on" else 0
+        show_sexuality = 1 if request.form.get("show_sexuality") == "on" else 0
 
         # Pet tag validation
         pet_tags = {
@@ -393,8 +395,8 @@ def settings():
         c.execute("""
             UPDATE users SET
                 display_name = ?, age = ?, location = ?, favorite_animal = ?,
-                dog_free_reason = ?, bio = ?, gender = ?, interests = ?,
-                main_tag = ?, tags = ?
+                dog_free_reason = ?, bio = ?, gender = ?, sexuality = ?, show_gender = ?, 
+                show_sexuality = ? interests = ?, main_tag = ?, tags = ?
             WHERE username = ?
         """, (
             display_name, age, location, favorite_animal, dog_free_reason,
@@ -445,11 +447,14 @@ def complete_profile():
         favorite_animal = request.form.get("favorite_animal", "")
         dog_free_reason = request.form.get("dog_free_reason", "")
         bio = request.form.get("bio", "")
-        gender = request.form.get("gender", "")
         interests = request.form.get("interests", "")
         main_tag = request.form.get("main_tag", "")
         tags = request.form.getlist("tags")
         tags_string = ",".join(tags)
+        gender = request.form.get("gender", "")
+        sexuality = request.form.get("sexuality", "")
+        show_gender = 1 if request.form.get("show_gender") == "on" else 0
+        show_sexuality = 1 if request.form.get("show_sexuality") == "on" else 0
 
         # Check username uniqueness
         c.execute("SELECT 1 FROM users WHERE username = ? AND username != ?", (new_username, username))
@@ -566,7 +571,6 @@ def browse():
     max_age = request.form.get("max_age")
     location_input = request.form.get("location", "").strip().lower()
     gender_input = request.form.get("gender", "").strip().lower()
-    interest_input = request.form.get("interest", "").strip().lower()
 
     # Get preferred and dealbreaker tags from input
     preferred_tags = request.form.getlist("preferred_tags")
@@ -605,7 +609,7 @@ def browse():
 
     def score_user(user):
         score = 0
-        (display_name, username, age, loc, _, _, _, _, gender, interests, _, tags_str,
+        (display_name, username, age, loc, _, _, _, _, gender, _, _, tags_str,
          lat, lon) = user
 
         if min_age and age and int(age) >= int(min_age):
@@ -615,8 +619,6 @@ def browse():
         if location_input and loc and location_input in loc.lower():
             score += 1
         if gender_input and gender and gender_input == gender.lower():
-            score += 1
-        if interest_input and interests and interest_input in interests.lower():
             score += 1
 
         user_tags = tags_str.lower().split(",") if tags_str else []
@@ -661,8 +663,7 @@ def view_user_profile(username):
     # Get user info
     c.execute("""
         SELECT display_name, age, location, favorite_animal,
-               dog_free_reason, profile_pic, bio, gender,
-               interests, main_tag, tags,
+               dog_free_reason, profile_pic, bio, gender, main_tag, tags,
                gallery_image_1, gallery_image_2, gallery_image_3,
                gallery_image_4, gallery_image_5
         FROM users WHERE username = ?
@@ -675,7 +676,7 @@ def view_user_profile(username):
         return redirect(url_for("browse"))
 
     (display_name, age, location, favorite_animal, dog_free_reason,
-     profile_pic, bio, gender, interests, main_tag, tags_string,
+     profile_pic, bio, gender, main_tag, tags_string,
      g1, g2, g3, g4, g5) = result or (None,) * 16
 
     gallery_images = [g for g in [g1, g2, g3, g4, g5] if g]

@@ -50,15 +50,52 @@
                 <input type="number" id="age" name="age" class="form-control" min="18" max="99">
             </div>
 
+                        <!-- Gender Dropdown -->
             <div class="mb-3">
-                <label for="gender" class="form-label">Gender</label>
-                <input type="text" id="gender" name="gender" class="form-control">
+              <label class="form-label">Gender</label>
+              <select name="gender" class="form-select">
+                <option value="">Prefer not to say</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Nonbinary">Nonbinary</option>
+                <option value="Trans Man">Trans Man</option>
+                <option value="Trans Woman">Trans Woman</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
 
-            <div class="mb-3">
-                <label for="interests" class="form-label">Hobbies or Interests</label>
-                <input type="text" id="interests" name="interests" class="form-control" placeholder="e.g. Reading, hiking, cooking">
+            <!-- Show Gender Toggle -->
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" name="show_gender" id="showGender">
+              <label class="form-check-label" for="showGender">
+                Show my gender on my public profile
+              </label>
             </div>
+
+            <!-- Sexuality Dropdown -->
+            <div class="mb-3">
+              <label class="form-label">Sexual Orientation</label>
+              <select name="sexuality" class="form-select">
+                <option value="">Prefer not to say</option>
+                <option value="Straight">Straight</option>
+                <option value="Gay">Gay</option>
+                <option value="Lesbian">Lesbian</option>
+                <option value="Bisexual">Bisexual</option>
+                <option value="Pansexual">Pansexual</option>
+                <option value="Asexual">Asexual</option>
+                <option value="Queer">Queer</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <!-- Show Sexuality Toggle -->
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" name="show_sexuality" id="showSexuality">
+              <label class="form-check-label" for="showSexuality">
+                Show my orientation on my public profile
+              </label>
+            </div>
+
 
                         <!-- 🔖 Main Tag Dropdown -->
             <div class="mb-3">

@@ -42,7 +42,91 @@
 
     <!-- Filters: same as before -->
     <form method="POST" class="mb-4 p-3 border rounded bg-light">
-      <!-- [Your existing filter form code here — unchanged] -->
+      <form method="POST" class="mb-4 p-3 border rounded bg-light">
+  <div class="row g-3 align-items-end">
+
+    <div class="col-md-2">
+      <label class="form-label">Min Age</label>
+      <input type="number" name="min_age" class="form-control" min="18">
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Max Age</label>
+      <input type="number" name="max_age" class="form-control" max="99">
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Location</label>
+      <input type="text" name="location" class="form-control">
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Gender</label>
+      <select name="gender" class="form-select">
+        <option value="">Any</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Nonbinary">Nonbinary</option>
+        <option value="Prefer not to say">Prefer not to say</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Preferred Tags</label>
+      <select class="form-select" name="preferred_tags" multiple>
+        <optgroup label="🐾 Pet Tags">
+          <option value="Fully Pet-Free">🚫 Fully Pet-Free</option>
+          <option value="Reptile Roomie">🐍 Reptile Roomie</option>
+          <option value="Cat Companion">🐱 Cat Companion</option>
+          <option value="Rodent Roomie">🐁 Rodent Roomie</option>
+          <option value="Bird Bestie">🦜 Bird Bestie</option>
+          <option value="Fish Friend">🐟 Fish Friend</option>
+          <option value="Turtle Tenant">🐢 Turtle Tenant</option>
+          <option value="Plant Person">🪴 Plant Person</option>
+          <option value="Bug Buddy">🪳 Bug Buddy</option>
+        </optgroup>
+        <optgroup label="🌱 Lifestyle Tags">
+          <option value="Child-Free">Child-Free</option>
+          <option value="Neurodivergent">Neurodivergent</option>
+          <option value="Creative at Heart">Creative at Heart</option>
+          <option value="Digital Nomad">Digital Nomad</option>
+        </optgroup>
+      </select>
+      <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple</small>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Dealbreaker Tags</label>
+      <select class="form-select" name="dealbreaker_tags" multiple>
+        <optgroup label="🐾 Pet Tags">
+          <option value="Fully Pet-Free">🚫 Fully Pet-Free</option>
+          <option value="Reptile Roomie">🐍 Reptile Roomie</option>
+          <option value="Cat Companion">🐱 Cat Companion</option>
+          <option value="Rodent Roomie">🐁 Rodent Roomie</option>
+          <option value="Bird Bestie">🦜 Bird Bestie</option>
+          <option value="Fish Friend">🐟 Fish Friend</option>
+          <option value="Turtle Tenant">🐢 Turtle Tenant</option>
+          <option value="Plant Person">🪴 Plant Person</option>
+          <option value="Bug Buddy">🪳 Bug Buddy</option>
+        </optgroup>
+        <optgroup label="🌱 Lifestyle Tags">
+          <option value="Child-Free">Child-Free</option>
+          <option value="Neurodivergent">Neurodivergent</option>
+          <option value="Creative at Heart">Creative at Heart</option>
+          <option value="Digital Nomad">Digital Nomad</option>
+        </optgroup>
+      </select>
+      <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple</small>
+    </div>
+
+
+    <div class="col-md-1">
+      <button type="submit" class="btn btn-primary w-100">🔍</button>
+    </div>
+
+  </div>
+</form>
+
     </form>
 
     <!-- 📍 Location button -->

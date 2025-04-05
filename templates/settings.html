@@ -56,10 +56,52 @@
                         <textarea class="form-control" id="bio" name="bio" rows="3">{{ data[5] or '' }}</textarea>
                     </div>
 
+                                        <!-- Gender Dropdown -->
                     <div class="mb-3">
-                        <label for="gender" class="form-label">Gender</label>
-                        <input type="text" class="form-control" id="gender" name="gender" value="{{ data[6] or '' }}">
+                      <label class="form-label">Gender</label>
+                      <select name="gender" class="form-select">
+                        <option value="">Prefer not to say</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Nonbinary">Nonbinary</option>
+                        <option value="Trans Man">Trans Man</option>
+                        <option value="Trans Woman">Trans Woman</option>
+                        <option value="Other">Other</option>
+                      </select>
                     </div>
+
+                    <!-- Show Gender Toggle -->
+                    <div class="form-check mb-3">
+                      <input class="form-check-input" type="checkbox" name="show_gender" id="showGender">
+                      <label class="form-check-label" for="showGender">
+                        Show my gender on my public profile
+                      </label>
+                    </div>
+
+                    <!-- Sexuality Dropdown -->
+                    <div class="mb-3">
+                      <label class="form-label">Sexual Orientation</label>
+                      <select name="sexuality" class="form-select">
+                        <option value="">Prefer not to say</option>
+                        <option value="Straight">Straight</option>
+                        <option value="Gay">Gay</option>
+                        <option value="Lesbian">Lesbian</option>
+                        <option value="Bisexual">Bisexual</option>
+                        <option value="Pansexual">Pansexual</option>
+                        <option value="Asexual">Asexual</option>
+                        <option value="Queer">Queer</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    <!-- Show Sexuality Toggle -->
+                    <div class="form-check mb-3">
+                      <input class="form-check-input" type="checkbox" name="show_sexuality" id="showSexuality">
+                      <label class="form-check-label" for="showSexuality">
+                        Show my orientation on my public profile
+                      </label>
+                    </div>
+
 
                     <div class="mb-3">
                         <label for="interests" class="form-label">Interests (comma-separated)</label>
