@@ -1,9 +1,8 @@
-import os
+import os, random, sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from authlib.integrations.flask_client import OAuth
-import sqlite3
 from dotenv import load_dotenv
 
 
@@ -131,6 +130,19 @@ def google_login():
     print("Redirect URI sent to Google:", redirect_uri)
     return google.authorize_redirect(redirect_uri)
 
+def generate_display_name():
+    adjectives = ["Bold", "Witty", "Chill", "Thick", "Sly", "Clever",
+                  "Gentle", "Zesty", "Brave", "Loyal", "Sleepy", "Hyper-active",
+                  "Bouncy", "Inflatable", "The", "Endangered", "Immortal", "Real", "Left-handed",
+                  "Assistant", "Crusty", "Feral", "Wandering", "Lucky", "Unstoppable", "Lonely",
+                  "Single", "Professional", "Legendary", "Part-time", "Little", "Big"]
+    animals = [
+        "Koala", "Gecko", "Iguana", "Cat", "Turtle", "Ferret", "Fox", "Hedgehog",
+        "Rabbit", "Tiger", "Giraffe", "Penguin", "Llama", "Otter", "Snake", "Platypus",
+        "Tarantula", "Spider", "Lizard", "Dragon"
+    ]
+    return random.choice(adjectives) + random.choice(animals)
+
 @app.route('/login/google/callback')
 def google_callback():
     token = google.authorize_access_token()
@@ -143,18 +155,22 @@ def google_callback():
     existing_user = c.fetchone()
 
     if not existing_user:
-        # Create user using email as username
+        display_name = generate_display_name()
         c.execute("""
-            INSERT INTO users (username, password)
-            VALUES (?, ?)
-        """, (email, generate_password_hash("google_oauth_login")))
+            INSERT INTO users (username, password, display_name)
+            VALUES (?, ?, ?)
+        """, (email, generate_password_hash("google_oauth_login"), display_name))
         conn.commit()
+        session["needs_profile_completion"] = True
 
     conn.close()
     session["username"] = email
     flash("Logged in with Google!", "success")
-    return redirect(url_for("profile"))
 
+    if session.pop("needs_profile_completion", False):
+        return redirect(url_for("settings"))
+
+    return redirect(url_for("profile"))
 
 
 
@@ -292,6 +308,74 @@ def settings():
     conn.close()
 
     return render_template("settings.html", data=data)
+
+@app.route("/complete-profile", methods=["GET", "POST"])
+def complete_profile():
+    if "username" not in session or not session.get("needs_profile_completion"):
+        return redirect(url_for("profile"))
+
+    username = session["username"]
+
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+
+    if request.method == "POST":
+        new_username = request.form.get("new_username", "").strip()
+        display_name = request.form.get("display_name", "").strip()
+        age = request.form.get("age")
+        location = request.form.get("location", "")
+        favorite_animal = request.form.get("favorite_animal", "")
+        dog_free_reason = request.form.get("dog_free_reason", "")
+        bio = request.form.get("bio", "")
+        gender = request.form.get("gender", "")
+        interests = request.form.get("interests", "")
+        main_tag = request.form.get("main_tag", "")
+        tags = request.form.getlist("tags")
+        tags_string = ",".join(tags)
+
+        # Check username uniqueness
+        c.execute("SELECT 1 FROM users WHERE username = ? AND username != ?", (new_username, username))
+        if c.fetchone():
+            flash("Username already taken.", "danger")
+            return redirect(url_for("complete_profile"))
+
+        # Pet tag validation
+        pet_tags = {
+            "Fully Pet-Free", "Allergic to Everything", "Reptile Roomie", "Cat Companion",
+            "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person",
+            "Bug Buddy", "My Pet’s a Vibe", "No Bark Zone", "Clean House > Cute Paws"
+        }
+        if not any(tag in pet_tags for tag in [main_tag] + tags):
+            flash("You must select at least one pet-related tag.", "danger")
+            return redirect(url_for("complete_profile"))
+
+        # Update user profile
+        c.execute("""
+            UPDATE users SET
+                username = ?, display_name = ?, age = ?, location = ?,
+                favorite_animal = ?, dog_free_reason = ?, bio = ?, gender = ?,
+                interests = ?, main_tag = ?, tags = ?
+            WHERE username = ?
+        """, (
+            new_username, display_name, age, location, favorite_animal,
+            dog_free_reason, bio, gender, interests, main_tag, tags_string, username
+        ))
+
+        conn.commit()
+        conn.close()
+
+        session["username"] = new_username
+        session.pop("needs_profile_completion", None)
+        flash("Profile completed!", "success")
+        return redirect(url_for("profile"))
+
+    # Pre-fill display_name from DB
+    c.execute("SELECT display_name FROM users WHERE username = ?", (username,))
+    display_name = c.fetchone()[0] or ""
+    conn.close()
+
+    return render_template("complete_profile.html", display_name=display_name, username=username)
+
 
 @app.route("/delete_gallery_image/<int:index>", methods=["POST"])
 def delete_gallery_image(index):

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Complete Your Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h2>Finish setting up your profile</h2>
+
+    <form method="POST" action="{{ url_for('complete_profile') }}">
+        <label>Email (not editable):</label><br>
+        <input type="text" value="{{ username }}" disabled><br><br>
+
+        <label for="new_username">Choose a username:</label><br>
+        <input type="text" id="new_username" name="new_username" required><br><br>
+
+        <label for="display_name">Display Name:</label><br>
+        <input type="text" id="display_name" name="display_name" value="{{ display_name }}" required><br><br>
+
+        <label for="age">Age:</label><br>
+        <input type="number" id="age" name="age"><br><br>
+
+        <label for="location">Location:</label><br>
+        <input type="text" id="location" name="location"><br><br>
+
+        <label for="favorite_animal">Favorite Animal:</label><br>
+        <input type="text" id="favorite_animal" name="favorite_animal"><br><br>
+
+        <label for="dog_free_reason">Why are you dog-free?</label><br>
+        <textarea id="dog_free_reason" name="dog_free_reason"></textarea><br><br>
+
+        <label for="bio">Short Bio:</label><br>
+        <textarea id="bio" name="bio"></textarea><br><br>
+
+        <label for="gender">Gender:</label><br>
+        <input type="text" id="gender" name="gender"><br><br>
+
+        <label for="interests">Interests:</label><br>
+        <input type="text" id="interests" name="interests"><br><br>
+
+        <label for="main_tag">Main Tag:</label><br>
+        <select name="main_tag" id="main_tag" required>
+            <option value="">-- Select --</option>
+            <option value="Fully Pet-Free">Fully Pet-Free</option>
+            <option value="Allergic to Everything">Allergic to Everything</option>
+            <option value="Reptile Roomie">Reptile Roomie</option>
+            <option value="Cat Companion">Cat Companion</option>
+            <option value="Rodent Roomie">Rodent Roomie</option>
+            <option value="Bird Bestie">Bird Bestie</option>
+            <option value="Fish Friend">Fish Friend</option>
+            <option value="Turtle Tenant">Turtle Tenant</option>
+            <option value="Plant Person">Plant Person</option>
+            <option value="Bug Buddy">Bug Buddy</option>
+            <option value="My Pet’s a Vibe">My Pet’s a Vibe</option>
+            <option value="No Bark Zone">No Bark Zone</option>
+            <option value="Clean House > Cute Paws">Clean House > Cute Paws</option>
+        </select><br><br>
+
+        <label>Additional Tags (optional):</label><br>
+        <input type="checkbox" name="tags" value="Plant Person"> Plant Person<br>
+        <input type="checkbox" name="tags" value="Reptile Roomie"> Reptile Roomie<br>
+        <input type="checkbox" name="tags" value="Cat Companion"> Cat Companion<br>
+        <input type="checkbox" name="tags" value="No Bark Zone"> No Bark Zone<br>
+        <input type="checkbox" name="tags" value="Fish Friend"> Fish Friend<br>
+        <input type="checkbox" name="tags" value="Clean House > Cute Paws"> Clean House > Cute Paws<br>
+        <!-- Add more as you like! --><br>
+
+        <button type="submit">Complete Profile</button>
+    </form>
+</body>
+</html>
