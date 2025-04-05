@@ -17,6 +17,7 @@ NUM_USERS = min(116, len(profile_pics))
 password = "testpass"
 hashed_password = generate_password_hash(password)
 
+
 # Pools
 dog_free_reasons = [
     "Allergic to dogs", "Prefer cats", "Fear of dogs", "Dogs too loud",
@@ -53,7 +54,7 @@ for i in range(NUM_USERS):
     location = fake.city()
     favorite_animal = random.choice(favorite_animals)
     dog_free_reason = random.choice(dog_free_reasons)
-    profile_pic = profile_pics[i % len(profile_pics)]
+    profile_pic = f"profilepics/{profile_pics[i % len(profile_pics)]}"
     gender = random.choice(genders)
     interests = ", ".join(random.sample(interests_pool, k=random.randint(2, 4)))
     bio = fake.sentence(nb_words=12)
@@ -62,17 +63,31 @@ for i in range(NUM_USERS):
     lat = base_lat + random.uniform(-0.1, 0.1)
     lon = base_lon + random.uniform(-0.1, 0.1)
 
+    # Fun + serious tag pools
+    main_tag_pool = [
+        "Fully Pet-Free", "Allergic to Everything", "No Bark Zone", "Reptile Roomie",
+        "Bug Buddy", "My Pet’s a Vibe", "Plant Person"
+    ]
+    extra_tags_pool = [
+        "Neurodivergent", "Child-Free", "Creative at Heart", "Career-Focused",
+        "Monogamous", "Open to ENM", "Just Looking for Friends", "Turtle Tenant", "Cat Companion"
+    ]
+
+    main_tag = random.choice(main_tag_pool)
+    tags = random.sample(extra_tags_pool, k=random.randint(1, 3))
+    tags_string = ",".join(tags)
+
     try:
         c.execute("""
-                   INSERT INTO users (
-                       username, password, display_name, age, location, favorite_animal,
-                       dog_free_reason, profile_pic, bio, gender, interests,
-                       latitude, longitude
-                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-               """, (
+                    INSERT INTO users (
+                        username, password, display_name, age, location, favorite_animal,
+                        dog_free_reason, profile_pic, bio, gender, interests,
+                        latitude, longitude, main_tag, tags
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
             username, hashed_password, display_name, age, location, favorite_animal,
             dog_free_reason, profile_pic, bio, gender, interests,
-            lat, lon
+            lat, lon, main_tag, tags_string
         ))
         credentials.append([username, password])
     except sqlite3.IntegrityError:
