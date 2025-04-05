@@ -371,7 +371,8 @@ def complete_profile():
 
     # Pre-fill display_name from DB
     c.execute("SELECT display_name FROM users WHERE username = ?", (username,))
-    display_name = c.fetchone()[0] or ""
+    row = c.fetchone()
+    display_name = row[0] if row else ""
     conn.close()
 
     return render_template("complete_profile.html", display_name=display_name, username=username)
