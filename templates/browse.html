@@ -47,83 +47,91 @@
   </div>
 </nav>
 
-<!-- 🧠 Filter Sidebar (Sliding Panel) -->
+<!-- 🍔 Navbar with Matches/Messages and Sidebar Toggle -->
+<nav class="navbar navbar-light bg-light fixed-top">
+  <div class="container-fluid d-flex justify-content-between">
+    <div>
+      <button class="btn btn-outline-secondary navbar-toggle-btn" onclick="toggleFiltersMenu()">
+        ☰
+      </button>
+    </div>
+    <div>
+      <a href="{{ url_for('matches') }}" class="btn btn-outline-success me-2">💘 Matches</a>
+      <a href="{{ url_for('message_thread', username=session['username']) }}"
+         class="btn btn-outline-primary">📩 Messages</a>
+    </div>
+  </div>
+</nav>
+
+<!-- 🧠 Sliding Sidebar Menu -->
 <div id="filterSidebar">
-  <form method="POST" class="p-4">
-    <h4 class="mb-4">🔍 Filter Search</h4>
-    <div class="mb-3 text-end">
-      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleFilters()">✖ Close</button>
+  <div class="p-4">
+    <div class="mb-3 d-grid gap-2">
+      <a href="{{ url_for('profile') }}" class="btn btn-outline-dark">👤 Profile</a>
+      <a href="{{ url_for('settings') }}" class="btn btn-outline-dark">⚙️ Settings</a>
+      <button class="btn btn-outline-dark" onclick="toggleSearchSection()">🔍 Search Filters</button>
     </div>
 
-    <!-- 🎚 Age Slider -->
-    <div class="mb-3">
-      <label class="form-label">Age Range</label>
-      <div class="d-flex align-items-center gap-3">
-        <span id="minAgeLabel">18</span>
-        <input type="range" class="form-range" id="minAge" name="min_age" min="18" max="99" value="18">
-        <input type="range" class="form-range" id="maxAge" name="max_age" min="18" max="99" value="99">
-        <span id="maxAgeLabel">99</span>
+<!-- 🔍 Filter Form -->
+    <form id="searchFilters" method="POST" class="mt-4" style="display: none;">
+      <div class="mb-3">
+        <label class="form-label">Age Range</label>
+        <div class="d-flex align-items-center gap-3">
+          <span id="minAgeLabel">18</span>
+          <input type="range" class="form-range" id="minAge" name="min_age" min="18" max="99" value="18">
+          <input type="range" class="form-range" id="maxAge" name="max_age" min="18" max="99" value="99">
+          <span id="maxAgeLabel">99</span>
+        </div>
       </div>
-    </div>
-
-    <!-- 🏙 Location -->
-    <div class="mb-3">
-      <label class="form-label">Location</label>
-      <input type="text" name="location" class="form-control">
-    </div>
-
-    <!-- ⚧ Gender -->
-    <div class="mb-3">
-      <label class="form-label">Gender</label>
-      <select name="gender" class="form-select">
-        <option value="">Any</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-        <option value="Nonbinary">Nonbinary</option>
-        <option value="Prefer not to say">Prefer not to say</option>
-      </select>
-    </div>
-
-    <!-- ✅ Preferred Tags -->
-    <div class="mb-3">
-      <label class="form-label">Preferred Tags</label>
-      <div id="preferred-tags" class="d-flex flex-wrap gap-2">
-        <span class="text-muted w-100">🐾 Pet Tags</span>
-        {% for tag in ["Fully Pet-Free", "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy"] %}
-          <button type="button" class="btn btn-outline-primary btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
-        {% endfor %}
-        <span class="text-muted w-100 mt-2">🌱 Lifestyle Tags</span>
-        {% for tag in ["Child-Free", "Single Parent", "Divorced", "Parent (Don't live with kids)", "Parent (Kids part-time)", "Open to Kids", "Neurodivergent", "Creative at Heart", "Digital Nomad", "Career-Focused", "Just Looking for Friends", "Monogamous", "Open to ENM"] %}
-          <button type="button" class="btn btn-outline-primary btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
-        {% endfor %}
+      <div class="mb-3">
+        <label class="form-label">Location</label>
+        <input type="text" name="location" class="form-control">
       </div>
-      <input type="hidden" name="preferred_tags" id="preferredTagsInput">
-    </div>
-
-    <!-- 🚫 Dealbreaker Tags -->
-    <div class="mb-3">
-      <label class="form-label">Dealbreaker Tags</label>
-      <div id="dealbreaker-tags" class="d-flex flex-wrap gap-2">
-        <span class="text-muted w-100">🐾 Pet Tags</span>
-        {% for tag in ["Fully Pet-Free", "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy"] %}
-          <button type="button" class="btn btn-outline-danger btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
-        {% endfor %}
-        <span class="text-muted w-100 mt-2">🌱 Lifestyle Tags</span>
-        {% for tag in ["Child-Free", "Single Parent", "Divorced", "Parent (Don't live with kids)", "Parent (Kids part-time)", "Open to Kids", "Neurodivergent", "Creative at Heart", "Digital Nomad", "Career-Focused", "Just Looking for Friends", "Monogamous", "Open to ENM"] %}
-          <button type="button" class="btn btn-outline-danger btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
-        {% endfor %}
+      <div class="mb-3">
+        <label class="form-label">Gender</label>
+        <select name="gender" class="form-select">
+          <option value="">Any</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Nonbinary">Nonbinary</option>
+          <option value="Prefer not to say">Prefer not to say</option>
+        </select>
       </div>
-      <input type="hidden" name="dealbreaker_tags" id="dealbreakerTagsInput">
-    </div>
-
-    <!-- 📍 Location Button -->
-    <div class="text-end mb-3">
-      <button type="button" class="btn btn-outline-primary btn-sm" onclick="requestUserLocation()">📍 Use My Location</button>
-      <small class="d-block text-muted mt-1">Just for match boost. Never shown to others.</small>
-    </div>
-
-    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
-  </form>
+      <div class="mb-3">
+        <label class="form-label">Preferred Tags</label>
+        <div id="preferred-tags" class="d-flex flex-wrap gap-2">
+          <span class="text-muted w-100">🐾 Pet Tags</span>
+          {% for tag in ["Fully Pet-Free", "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy"] %}
+            <button type="button" class="btn btn-outline-primary btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
+          {% endfor %}
+          <span class="text-muted w-100 mt-2">🌱 Lifestyle Tags</span>
+          {% for tag in ["Child-Free", "Single Parent", "Divorced", "Parent (Don't live with kids)", "Parent (Kids part-time)", "Open to Kids", "Neurodivergent", "Creative at Heart", "Digital Nomad", "Career-Focused", "Just Looking for Friends", "Monogamous", "Open to ENM"] %}
+            <button type="button" class="btn btn-outline-primary btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="preferred_tags" id="preferredTagsInput">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Dealbreaker Tags</label>
+        <div id="dealbreaker-tags" class="d-flex flex-wrap gap-2">
+          <span class="text-muted w-100">🐾 Pet Tags</span>
+          {% for tag in ["Fully Pet-Free", "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy"] %}
+            <button type="button" class="btn btn-outline-danger btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
+          {% endfor %}
+          <span class="text-muted w-100 mt-2">🌱 Lifestyle Tags</span>
+          {% for tag in ["Child-Free", "Single Parent", "Divorced", "Parent (Don't live with kids)", "Parent (Kids part-time)", "Open to Kids", "Neurodivergent", "Creative at Heart", "Digital Nomad", "Career-Focused", "Just Looking for Friends", "Monogamous", "Open to ENM"] %}
+            <button type="button" class="btn btn-outline-danger btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="dealbreaker_tags" id="dealbreakerTagsInput">
+      </div>
+      <div class="text-end mb-3">
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="requestUserLocation()">📍 Use My Location</button>
+        <small class="d-block text-muted mt-1">Just for match boost. Never shown to others.</small>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+    </form>
+  </div>
 </div>
 
 <!-- 📸 Main Content Area -->
@@ -136,33 +144,18 @@
             {% for user, score in users %}
               <div class="col">
                 <div class="card h-100 shadow-sm position-relative">
-                  <img src="{{ url_for('static', filename=user[6] or 'profilepics/default_profile_pic.png') }}"
-                       class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
-
+                  <img src="{{ url_for('static', filename=user[6] or 'profilepics/default_profile_pic.png') }}" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
                   <div class="card-body">
                     <h5 class="card-title mb-1">{{ user[0] }}, {{ user[2] or '?' }}</h5>
                     <p class="card-text text-muted mb-2">{{ user[3] or 'No location' }}</p>
-
-                    {% if user[10] %}
-                      <span class="badge bg-primary fs-6">{{ user[10] }}</span>
-                    {% endif %}
-
+                    {% if user[10] %}<span class="badge bg-primary fs-6">{{ user[10] }}</span>{% endif %}
                     {% set tag_list = user[11].split(',') if user[11] else [] %}
                     <div class="mt-2">
-                      {% for tag in tag_list[:2] %}
-                        <span class="badge bg-secondary me-1">{{ tag }}</span>
-                      {% endfor %}
+                      {% for tag in tag_list[:2] %}<span class="badge bg-secondary me-1">{{ tag }}</span>{% endfor %}
                     </div>
-
-                    {% if score >= 4 %}
-                      <div class="mt-2"><span class="badge bg-success">💘 High Match</span></div>
-                    {% endif %}
+                    {% if score >= 4 %}<div class="mt-2"><span class="badge bg-success">💘 High Match</span></div>{% endif %}
                   </div>
-
-                  <button class="btn btn-light border rounded-circle like-btn position-absolute bottom-0 end-0 m-2"
-                          data-username="{{ user[1] }}" aria-label="Like {{ user[0] }}">
-                    🦝
-                  </button>
+                  <button class="btn btn-light border rounded-circle like-btn position-absolute bottom-0 end-0 m-2" data-username="{{ user[1] }}" aria-label="Like {{ user[0] }}">🦝</button>
                 </div>
               </div>
             {% endfor %}
@@ -170,7 +163,6 @@
         {% else %}
           <div class="alert alert-info text-center mt-4">No users match your filters. Try again!</div>
         {% endif %}
-
         <div class="text-center mt-4">
           <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">Back to Profile</a>
         </div>
@@ -180,11 +172,17 @@
 </div>
 
 <script>
-function toggleFilters() {
+function toggleFiltersMenu() {
   const sidebar = document.getElementById("filterSidebar");
-  const mainWrapper = document.getElementById("mainContentWrapper");
+  const main = document.getElementById("mainContentWrapper");
   sidebar.classList.toggle("show");
-  mainWrapper.classList.toggle("shifted");
+  main.classList.toggle("shifted");
+}
+function toggleSearchSection() {
+  const searchSection = document.getElementById("searchFilters");
+  if (searchSection) {
+    searchSection.style.display = searchSection.style.display === "none" ? "block" : "none";
+  }
 }
 </script>
 <script>
