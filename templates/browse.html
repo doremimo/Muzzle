@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Browse Users</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="container mt-3">
+          {% for message in messages %}
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+
+    <div class="container mt-5" style="max-width: 800px;">
+        <h2 class="text-center mb-4">Dog-Free Singles Near You</h2>
+
+        <!-- 🔍 Filter Form -->
+        <form method="POST" class="mb-4 p-3 border rounded bg-light">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label">Min Age</label>
+                    <input type="number" name="min_age" class="form-control" min="18">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Max Age</label>
+                    <input type="number" name="max_age" class="form-control" max="99">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Location</label>
+                    <input type="text" name="location" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Gender</label>
+                    <select name="gender" class="form-select">
+                        <option value="">Any</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Nonbinary">Nonbinary</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Interest Keyword</label>
+                    <input type="text" name="interest" class="form-control" placeholder="Ex: music">
+                </div>
+
+                <div class="col-md-3">
+                  <label class="form-label">Preferred Tags</label>
+                  <select class="form-select" name="preferred_tags" multiple>
+                    <optgroup label="🐾 Fun & Identity Tags"><option value="Fully Pet-Free">🚫 Fully Pet-Free</option>
+                      <option value="Reptile Roomie">🐍 Reptile Roomie</option>
+                      <option value="Cat Companion">🐱 Cat Companion</option>
+                      <option value="Rodent Roomie">🐁 Rodent Roomie</option>
+                      <option value="Bird Bestie">🦜 Bird Bestie</option>
+                      <option value="Fish Friend">🐟 Fish Friend</option>
+                      <option value="Turtle Tenant">🐢 Turtle Tenant</option>
+                      <option value="Plant Person">🪴 Plant Person</option>
+                      <option value="Bug Buddy">🪳 Bug Buddy</option>
+                      <option value="My Pet’s a Vibe">👽 My Pet’s a Vibe</option>
+                      <option value="No Bark Zone">🚫 No Bark Zone</option>
+                      <option value="Clean House > Cute Paws">🧼 Clean House > Cute Paws</option>
+                      <option value="Fully Pet-Free">🚫 Fully Pet-Free</option>
+                      <option value="Allergic to Everything">🤧 Allergic to Everything</option>
+                      <option value="Hates Loud Noises">🧻 Hates Loud Noises</option>
+                      <option value="Bed is Sacred">😴 Bed is Sacred</option>
+                      <option value="No Dog Hair, No Cry">🐶 No Dog Hair, No Cry</option>
+                      <option value="Not Here for Doggy Breath">🚷 Not Here for Doggy Breath</option>
+                      <option value="My Couch > Your Dog">🛋️ My Couch > Your Dog</option>
+                      <option value="Cat Yes, Dog No">🐱 Cat Yes, Dog No</option>
+                      <option value="Slo-Mo Pets Only">🐢 Slo-Mo Pets Only</option>
+                      <option value="Don't Judge My Pet Cockroach">Don’t Judge My Pet Cockroach</option>
+                      <option value="Lizard Liker">🦎 Lizard Liker</option>
+                    </optgroup>
+
+                    <optgroup label="🌱 Lifestyle & Values Tags">
+                      <option value="Child-Free">Child-Free</option>
+                      <option value="Single Parent">Single Parent</option>
+                      <option value="Divorced">Divorced</option>
+                      <option value="Parent (Don't live with kids)">Parent (Don't live with kids)</option>
+                      <option value="Parent (Kids part-time)">Parent (Kids part-time)</option>
+                      <option value="Open to Kids">Open to Kids</option>
+                      <option value="Neurodivergent">Neurodivergent</option>
+                      <option value="Creative at Heart">Creative at Heart</option>
+                      <option value="Digital Nomad">Digital Nomad</option>
+                      <option value="Career-Focused">Career-Focused</option>
+                      <option value="Just Looking for Friends">Just Looking for Friends</option>
+                      <option value="Monogamous">Monogamous</option>
+                      <option value="Open to ENM">Open to ENM</option>
+                    </optgroup>
+                  </select>
+                  <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple</small>
+                </div>
+
+                <div class="col-md-3">
+                  <label class="form-label">Dealbreaker Tags</label>
+                  <select class="form-select" name="dealbreaker_tags" multiple>
+                    <optgroup label="🐾 Pet & Environment Tags">
+                      <option value="Fully Pet-Free">🚫 Fully Pet-Free</option>
+                      <option value="Reptile Roomie">🐍 Reptile Roomie</option>
+                      <option value="Cat Companion">🐱 Cat Companion</option>
+                      <option value="Rodent Roomie">🐁 Rodent Roomie</option>
+                      <option value="Bird Bestie">🦜 Bird Bestie</option>
+                      <option value="Fish Friend">🐟 Fish Friend</option>
+                      <option value="Turtle Tenant">🐢 Turtle Tenant</option>
+                      <option value="Plant Person">🪴 Plant Person</option>
+                      <option value="Bug Buddy">🪳 Bug Buddy</option>
+                    </optgroup>
+                    <optgroup label="🌱 Lifestyle Tags">
+                      <option value="Child-Free">Child-Free</option>
+                      <option value="Single Parent">Single Parent</option>
+                      <option value="Divorced">Divorced</option>
+                      <option value="Parent (Don't live with kids)">Parent (Don't live with kids)</option>
+                      <option value="Parent (Kids part-time)">Parent (Kids part-time)</option>
+                      <option value="Open to Kids">Open to Kids</option>
+                      <option value="Neurodivergent">Neurodivergent</option>
+                      <option value="Creative at Heart">Creative at Heart</option>
+                      <option value="Digital Nomad">Digital Nomad</option>
+                      <option value="Career-Focused">Career-Focused</option>
+                      <option value="Just Looking for Friends">Just Looking for Friends</option>
+                      <option value="Monogamous">Monogamous</option>
+                      <option value="Open to ENM">Open to ENM</option>
+                    </optgroup>
+                  </select>
+                  <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple</small>
+                </div>
+
+
+
+                <div class="col-md-1 text-end">
+                    <button type="submit" class="btn btn-primary w-100">🔍</button>
+                </div>
+            </div>
+
+        </form>
+
+                <!-- 📍 Optional Location Button -->
+        <div class="text-end mb-4">
+          <button class="btn btn-outline-primary btn-sm" onclick="requestUserLocation()">
+            📍 Use My Location for Nearby Matches
+          </button>
+          <small class="d-block text-muted mt-1">
+            We’ll never share your exact location — this just helps prioritize nearby users.
+          </small>
+        </div>
+
+
+        {% if users %}
+
+            <div class="row g-4">
+                {% for user, score in users %}
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center">
+                                {% if user[6] %}
+                                    <div class="mb-3">
+                                        <img src="{{ url_for('static', filename='profilepics/' + user[6]) }}" class="img-thumbnail" style="max-width: 120px;">
+                                    </div>
+                                {% endif %}
+
+                                <h4 class="card-title">{{ user[0] or user[1] }}</h4>
+                                <h6 class="card-subtitle text-muted mb-2">@{{ user[1] }}</h6>
+
+
+
+                                                                <!-- 🔖 Main Tag -->
+                                {% if user[10] %}
+                                  <div class="mb-2">
+                                    <span class="badge bg-primary">{{ user[10] }}</span>
+                                  </div>
+                                {% endif %}
+
+                                <!-- ➕ Additional Tags -->
+                                {% if user[11] %}
+                                  <div class="mb-2">
+                                    {% set tags = user[11].split(",") %}
+                                    {% for tag in tags[:3] %}
+                                      <span class="badge bg-secondary me-1">{{ tag }}</span>
+                                    {% endfor %}
+                                  </div>
+                                {% endif %}
+
+
+                                {% if score >= 4 %}
+                                    <span class="badge bg-success mb-2">💘 High Match</span>
+                                {% endif %}
+
+                                <ul class="list-unstyled mb-3 text-start">
+                                    <li><strong>Age:</strong> {{ user[2] or "?" }}</li>
+                                    <li><strong>Location:</strong> {{ user[3] or "Unknown" }}</li>
+                                    <li><strong>Favorite Animal:</strong> {{ user[4] or "Not shared" }}</li>
+                                    <li><strong>Dog-Free Reason:</strong><br><em>{{ user[5] or "They didn’t say..." }}</em></li>
+                                    <li><strong>Bio:</strong> {{ user[7] or "" }}</li>
+                                    <li><strong>Gender:</strong> {{ user[8] or "" }}</li>
+                                    <li><strong>Interests:</strong> {{ user[9] or "" }}</li>
+                                </ul>
+
+                                <div class="d-flex justify-content-center flex-wrap gap-2">
+                                    <form action="{{ url_for('like', username=user[1]) }}" method="POST">
+                                        <button type="submit" class="btn btn-sm btn-success">💚 Like</button>
+                                    </form>
+
+                                    <form action="{{ url_for('report', username=user[1]) }}" method="POST">
+                                        <button type="submit" class="btn btn-sm btn-danger">🚨 Report</button>
+                                    </form>
+
+                                    <a href="{{ url_for('view_user_profile', username=user[1]) }}" class="btn btn-sm btn-outline-primary">
+                                        🔍 View Profile
+                                    </a>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center">No users match your filter criteria. Try adjusting your filters!</div>
+        {% endif %}
+
+        <div class="text-center mt-4">
+            <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">Back to Profile</a>
+        </div>
+    </div>
+
+<script>
+function sendLocationToServer(lat, lon) {
+    fetch("/set_location", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ latitude: lat, longitude: lon })
+    });
+}
+
+function requestUserLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            sendLocationToServer(lat, lon);
+        });
+    } else {
+        alert("Your browser doesn't support location services.");
+    }
+}
+</script>
+
+</body>
+</html>
+
+

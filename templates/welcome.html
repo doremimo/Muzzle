@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to Muzzle</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container text-center mt-5" style="max-width: 400px;">
+        <h1 class="mb-4">Welcome to Muzzle</h1>
+        <p class="mb-4">The dating app for dog-free singles.</p>
+        <a href="{{ url_for('google_login') }}" class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center">
+            <img src="https://developers.google.com/identity/images/g-logo.png" style="height:20px; margin-right:8px;">
+            Continue with Google
+        </a>
+        <hr class="my-4">
+        <a href="{{ url_for('login') }}" class="btn btn-outline-secondary w-100 mb-2">Log In Manually</a>
+        <a href="{{ url_for('signup') }}" class="btn btn-secondary w-100">Sign Up Manually</a>
+    </div>
+</body>
+</html>

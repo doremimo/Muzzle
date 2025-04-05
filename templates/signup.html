@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+    <div class="container mt-5" style="max-width: 500px;">
+        <h2 class="mb-4 text-center">Create Your Dog-Free Account</h2>
+
+        <form method="POST">
+
+            <div class="mb-3">
+                <label for="username" class="form-label">Username:</label>
+                <input type="text" id="username" name="username" class="form-control"
+                    value="{{ username or '' }}" required>
+
+
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password"
+                       required pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}"
+                       title="Must be at least 8 characters, include uppercase, lowercase, a number, and a special character.">
+            </div>
+
+
+            <div class="mb-3">
+                <label for="display_name" class="form-label">Display Name</label>
+                <input type="text" id="display_name" name="display_name" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <label for="age" class="form-label">Age</label>
+                <input type="number" id="age" name="age" class="form-control" min="18" max="99">
+            </div>
+
+            <div class="mb-3">
+                <label for="gender" class="form-label">Gender</label>
+                <input type="text" id="gender" name="gender" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <label for="interests" class="form-label">Hobbies or Interests</label>
+                <input type="text" id="interests" name="interests" class="form-control" placeholder="e.g. Reading, hiking, cooking">
+            </div>
+
+                        <!-- 🔖 Main Tag Dropdown -->
+            <div class="mb-3">
+              <label class="form-label"><strong>Main Tag</strong></label>
+              <select class="form-select" name="main_tag" required>
+                <option value="">Choose your main tag</option>
+
+                <optgroup label="🐾 Fun & Identity Tags">
+                  <option value="Reptile Roomie">🐍 Reptile Roomie</option>
+                    <option value="Cat Companion">🐱 Cat Companion</option>
+                    <option value="Rodent Roomie">🐁 Rodent Roomie</option>
+                    <option value="Bird Bestie">🦜 Bird Bestie</option>
+                    <option value="Fish Friend">🐟 Fish Friend</option>
+                    <option value="Turtle Tenant">🐢 Turtle Tenant</option>
+                    <option value="Plant Person">🪴 Plant Person</option>
+                    <option value="Bug Buddy">🪳 Bug Buddy</option>
+                    <option value="My Pet’s a Vibe">👽 My Pet’s a Vibe</option>
+                    <option value="No Bark Zone">🚫 No Bark Zone</option>
+                    <option value="Clean House > Cute Paws">🧼 Clean House > Cute Paws</option>
+                    <option value="Fully Pet-Free">🚫 Fully Pet-Free</option>
+                    <option value="Allergic to Everything">🤧 Allergic to Everything</option>
+                    <option value="Hates Loud Noises">🧻 Hates Loud Noises</option>
+                    <option value="Hates Loud Noises">🧻 Hates Loud Noises</option>
+                    <option value="Bed is Sacred">😴 Bed is Sacred</option>
+                    <option value="No Dog Hair, No Cry">🐶 No Dog Hair, No Cry</option>
+                    <option value="Not Here for Doggy Breath">🚷 Not Here for Doggy Breath</option>
+                    <option value="My Couch > Your Dog">🛋️ My Couch > Your Dog</option>
+                    <option value="Cat Yes, Dog No">🐱 Cat Yes, Dog No</option>
+                    <option value="Slo-Mo Pets Only">🐢 Slo-Mo Pets Only</option>
+                    <option value="Don't Judge My Pet Cockroach">Don’t Judge My Pet Cockroach</option>
+                    <option value="Lizard Liker">🦎 Lizard Liker</option>
+                </optgroup>
+
+                <optgroup label="🌱 Lifestyle & Values Tags">
+                    <option value="Child-Free">Child-Free</option>
+                    <option value="Single Parent">Single Parent</option>
+                    <option value="Divorced">Divorced</option>
+                    <option value="Parent (Don't live with kids)">Parent (Don't live with kids)</option>
+                    <option value="Parent (Kids part-time)">Parent (Kids part-time)</option>
+                    <option value="Open to Kids">Open to Kids</option>
+                    <option value="Neurodivergent">Neurodivergent</option>
+                    <option value="Creative at Heart">Creative at Heart</option>
+                    <option value="Digital Nomad">Digital Nomad</option>
+                    <option value="Career-Focused">Career-Focused</option>
+                    <option value="Just Looking for Friends">Just Looking for Friends</option>
+                    <option value="Monogamous">Monogamous</option>
+                    <option value="Open to ENM">Open to ENM</option>
+                </optgroup>
+              </select>
+            </div>
+
+
+                        <!-- ➕ Additional Tags -->
+            <div class="mb-3">
+              <label class="form-label"><strong>Additional Tags</strong> (optional)</label>
+              <div class="d-flex flex-wrap gap-2">
+
+                {% set additional_tags = [
+                  "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie",
+                  "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy",
+                  "My Pet’s a Vibe", "No Bark Zone", "Hates Loud Noises", "Bed is Sacred",
+                  "No Dog Hair, No Cry", "Not Here for Doggy Breath", "My Couch > Your Dog", "Cat Yes, Dog No",
+                  "Slo-Mo Pets Only", "Don’t Judge My Pet Cockroach", "Lizard Liker", "Clean House > Cute Paws",
+                  "Fully Pet-Free", "Allergic to Everything", "Child-Free", "Divorced", "Single Parent", "Parent (Don't live with kids)",
+                  "Parent (Kids part-time)", "Open to Kids", "Neurodivergent", "Creative at Heart",
+                  "Digital Nomad", "Career-Focused", "Just Looking for Friends", "Monogamous", "Open to ENM"
+                ] %}
+
+                {% for tag in additional_tags %}
+                  <input type="checkbox" class="btn-check" name="tags" id="tag-{{ loop.index }}" value="{{ tag }}">
+                  <label class="btn btn-outline-primary btn-sm" for="tag-{{ loop.index }}">{{ tag }}</label>
+                {% endfor %}
+              </div>
+            </div>
+
+
+
+            <div class="mb-3">
+                <label for="bio" class="form-label">Short Bio</label>
+                <textarea id="bio" name="bio" class="form-control" rows="3" placeholder="Write a little about yourself..."></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" id="location" name="location" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <label for="favorite_animal" class="form-label">Favorite Animal (besides dogs)</label>
+                <input type="text" id="favorite_animal" name="favorite_animal" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <label for="dog_free_reason" class="form-label">Why are you dog-free?</label>
+                <textarea id="dog_free_reason" name="dog_free_reason" class="form-control" rows="3" placeholder="Ex: Allergic, prefer cats..."></textarea>
+            </div>
+
+            <div class="form-check mb-3">
+                <input type="checkbox" id="dog_free" name="dog_free" class="form-check-input">
+                <label for="dog_free" class="form-check-label">I swear I am dog-free and will remain dog-free.</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="/login">Already have an account? Log in</a>
+        </div>
+    </div>
+</body>
+</html>
