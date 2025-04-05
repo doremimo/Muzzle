@@ -1,15 +1,26 @@
 import os, random, sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
+from itsdangerous import URLSafeTimedSerializer
 
 
 load_dotenv()
-
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
+# Configure Flask mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+
+mail = Mail(app)
+
 
 # 🌐 Set up OAuth
 oauth = OAuth(app)
@@ -132,8 +143,8 @@ def google_login():
 
 def generate_display_name():
     adjectives = ["Bold", "Witty", "Chill", "Thick", "Sly", "Clever",
-                  "Gentle", "Zesty", "Brave", "Loyal", "Sleepy", "Hyper-active",
-                  "Bouncy", "Inflatable", "The", "Endangered", "Immortal", "Real", "Left-handed",
+                  "Gentle", "Zesty", "Brave", "Loyal", "Sleepy", "Hyperactive",
+                  "Bouncy", "Inflatable", "The", "Endangered", "Immortal", "Real", "Lefthanded",
                   "Assistant", "Crusty", "Feral", "Wandering", "Lucky", "Unstoppable", "Lonely",
                   "Single", "Professional", "Legendary", "Part-time", "Little", "Big"]
     animals = [
@@ -157,10 +168,11 @@ def google_callback():
     if not existing_user:
         display_name = generate_display_name()
         c.execute("""
-            INSERT INTO users (username, password, display_name)
-            VALUES (?, ?, ?)
+            INSERT INTO users (username, password, display_name, email_verified)
+            VALUES (?, ?, ?, 0)
         """, (email, generate_password_hash("google_oauth_login"), display_name))
         conn.commit()
+        send_verification_email(email)  # ← Send email verification
         session["needs_profile_completion"] = True
 
     conn.close()
@@ -173,6 +185,108 @@ def google_callback():
     return redirect(url_for("profile"))
 
 
+#Verification Route
+@app.route('/verify/<token>')
+def verify_email(token):
+    email = confirm_verification_token(token)
+    if not email:
+        flash('Verification link expired or invalid.', 'danger')
+        return redirect(url_for('home'))
+
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("SELECT email_verified FROM users WHERE username = ?", (email,))
+    user = c.fetchone()
+
+    if user:
+        if user[0] == 1:
+            flash('Email already verified!', 'info')
+        else:
+            c.execute("UPDATE users SET email_verified = 1 WHERE username = ?", (email,))
+            conn.commit()
+            flash('Email successfully verified!', 'success')
+    else:
+        flash('User not found!', 'danger')
+
+    conn.close()
+    return redirect(url_for('profile'))
+
+
+
+# Token Generation, help verify email
+serializer = URLSafeTimedSerializer(app.secret_key)
+
+def generate_verification_token(email):
+    return serializer.dumps(email, salt='email-verify')
+
+def confirm_verification_token(token, expiration=3600):
+    try:
+        email = serializer.loads(token, salt='email-verify', max_age=expiration)
+    except:
+        return False
+    return email
+
+# Sending the verification
+from flask_mail import Message
+
+def send_verification_email(user_email):
+    token = generate_verification_token(user_email)
+    verification_url = url_for('verify_email', token=token, _external=True)
+
+    msg = Message('Verify your email for Muzzle', recipients=[user_email])
+    msg.body = f'''
+Hi there!
+
+Thanks for signing up for Muzzle 🐾
+
+Please verify your email address by clicking the link below:
+
+{verification_url}
+
+If you didn't sign up, you can safely ignore this email.
+
+Cheers,  
+The Muzzle Team
+'''
+    mail.send(msg)
+
+
+
+
+@app.route('/resend-verification')
+def resend_verification():
+    if "username" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    email = session["username"]
+
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("SELECT email_verified FROM users WHERE username = ?", (email,))
+    result = c.fetchone()
+
+    if not result:
+        flash("User not found.", "danger")
+        conn.close()
+        return redirect(url_for("profile"))
+
+    email_verified = result[0]
+    conn.close()
+
+    if email_verified:
+        flash("Your email is already verified.", "info")
+        return redirect(url_for("profile"))
+
+    # Send the verification email again
+    send_verification_email(email)
+    flash("Verification email resent!", "success")
+    return redirect(url_for("profile"))
+
+
+
+
+
 
 @app.route("/profile")
 def profile():
@@ -183,12 +297,14 @@ def profile():
         c = conn.cursor()
 
         # 🧠 Get profile data
+        # 🧠 Get profile data
         c.execute("""
             SELECT display_name, age, location, favorite_animal,
                    dog_free_reason, profile_pic, bio, gender,
                    interests, main_tag, tags,
                    gallery_image_1, gallery_image_2, gallery_image_3,
-                   gallery_image_4, gallery_image_5
+                   gallery_image_4, gallery_image_5,
+                   email_verified
             FROM users WHERE username = ?
         """, (username,))
         result = c.fetchone()
@@ -204,7 +320,7 @@ def profile():
 
         (display_name, age, location, favorite_animal, dog_free_reason,
          profile_pic, bio, gender, interests, main_tag, tags_string,
-         g1, g2, g3, g4, g5) = result or (None,) * 16
+         g1, g2, g3, g4, g5, email_verified) = result or (None,) * 17
 
         gallery_images = [g for g in [g1, g2, g3, g4, g5] if g]
 
@@ -224,7 +340,9 @@ def profile():
                                main_tag=main_tag,
                                tags=tags,
                                unread_count=unread_count,
-                               gallery_images=gallery_images)
+                               gallery_images=gallery_images,
+                               email_verified=email_verified)
+
     else:
         return redirect(url_for("login"))
 

@@ -21,7 +21,8 @@ c.execute("""
         main_tag TEXT,
         tags TEXT,
         latitude REAL,
-        longitude REAL
+        longitude REAL,
+         email_verified INTEGER DEFAULT 0
     )
 """)
 
