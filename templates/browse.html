@@ -1,66 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Browse Users</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-      .like-btn {
-        font-size: 1.6rem;
-        color: gray;
-        background-color: white;
-        transition: color 0.2s ease, transform 0.2s ease;
-      }
-      .like-btn.liked {
-        color: red;
-        animation: pop 0.3s ease;
-      }
-      @keyframes pop {
-        0%   { transform: scale(1); }
-        50%  { transform: scale(1.4); }
-        100% { transform: scale(1); }
-      }
-    </style>
+  <meta charset="UTF-8">
+  <title>Browse Users</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    #filterSidebar {
+      width: 300px;
+      background-color: #f8f9fa;
+      border-right: 1px solid #dee2e6;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: -300px;
+      z-index: 1050;
+      overflow-y: auto;
+      transition: left 0.3s ease;
+      padding-top: 70px;
+    }
+
+    #filterSidebar.show {
+      left: 0;
+    }
+
+    #mainContentWrapper {
+      transition: transform 0.3s ease;
+    }
+
+    #mainContentWrapper.shifted {
+      transform: translateX(300px);
+    }
+
+    .navbar-toggle-btn {
+      z-index: 1100;
+    }
+  </style>
 </head>
 <body>
 
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <div class="container mt-3">
-        {% for message in messages %}
-          <div class="alert alert-info alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
+<!-- 🍔 Toggle Button Always Visible -->
+<nav class="navbar navbar-light bg-light fixed-top">
+  <div class="container-fluid">
+    <button class="btn btn-outline-secondary navbar-toggle-btn" onclick="toggleFilters()">
+      ☰ Filters
+    </button>
+  </div>
+</nav>
+
+<!-- 🧠 Filter Sidebar (Sliding Panel) -->
+<div id="filterSidebar">
+  <form method="POST" class="p-4">
+    <h4 class="mb-4">🔍 Filter Search</h4>
+    <div class="mb-3 text-end">
+      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleFilters()">✖ Close</button>
+    </div>
+
+    <!-- 🎚 Age Slider -->
+    <div class="mb-3">
+      <label class="form-label">Age Range</label>
+      <div class="d-flex align-items-center gap-3">
+        <span id="minAgeLabel">18</span>
+        <input type="range" class="form-range" id="minAge" name="min_age" min="18" max="99" value="18">
+        <input type="range" class="form-range" id="maxAge" name="max_age" min="18" max="99" value="99">
+        <span id="maxAgeLabel">99</span>
       </div>
-    {% endif %}
-  {% endwith %}
-
-  <div class="container mt-5" style="max-width: 800px;">
-    <h2 class="text-center mb-4">Dog-Free Singles Near You</h2>
-
-    <!-- Filters: same as before -->
-    <form method="POST" class="mb-4 p-3 border rounded bg-light">
-      <form method="POST" class="mb-4 p-3 border rounded bg-light">
-  <div class="row g-3 align-items-end">
-
-    <div class="col-md-2">
-      <label class="form-label">Min Age</label>
-      <input type="number" name="min_age" class="form-control" min="18">
     </div>
 
-    <div class="col-md-2">
-      <label class="form-label">Max Age</label>
-      <input type="number" name="max_age" class="form-control" max="99">
-    </div>
-
-    <div class="col-md-2">
+    <!-- 🏙 Location -->
+    <div class="mb-3">
       <label class="form-label">Location</label>
       <input type="text" name="location" class="form-control">
     </div>
 
-    <div class="col-md-2">
+    <!-- ⚧ Gender -->
+    <div class="mb-3">
       <label class="form-label">Gender</label>
       <select name="gender" class="form-select">
         <option value="">Any</option>
@@ -71,173 +84,151 @@
       </select>
     </div>
 
-    <div class="col-md-3">
+    <!-- ✅ Preferred Tags -->
+    <div class="mb-3">
       <label class="form-label">Preferred Tags</label>
-      <select class="form-select" name="preferred_tags" multiple>
-        <optgroup label="🐾 Pet Tags">
-          <option value="Fully Pet-Free">🚫 Fully Pet-Free</option>
-          <option value="Reptile Roomie">🐍 Reptile Roomie</option>
-          <option value="Cat Companion">🐱 Cat Companion</option>
-          <option value="Rodent Roomie">🐁 Rodent Roomie</option>
-          <option value="Bird Bestie">🦜 Bird Bestie</option>
-          <option value="Fish Friend">🐟 Fish Friend</option>
-          <option value="Turtle Tenant">🐢 Turtle Tenant</option>
-          <option value="Plant Person">🪴 Plant Person</option>
-          <option value="Bug Buddy">🪳 Bug Buddy</option>
-        </optgroup>
-        <optgroup label="🌱 Lifestyle Tags">
-          <option value="Child-Free">Child-Free</option>
-          <option value="Neurodivergent">Neurodivergent</option>
-          <option value="Creative at Heart">Creative at Heart</option>
-          <option value="Digital Nomad">Digital Nomad</option>
-        </optgroup>
-      </select>
-      <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple</small>
-    </div>
-
-    <div class="col-md-3">
-      <label class="form-label">Dealbreaker Tags</label>
-      <select class="form-select" name="dealbreaker_tags" multiple>
-        <optgroup label="🐾 Pet Tags">
-          <option value="Fully Pet-Free">🚫 Fully Pet-Free</option>
-          <option value="Reptile Roomie">🐍 Reptile Roomie</option>
-          <option value="Cat Companion">🐱 Cat Companion</option>
-          <option value="Rodent Roomie">🐁 Rodent Roomie</option>
-          <option value="Bird Bestie">🦜 Bird Bestie</option>
-          <option value="Fish Friend">🐟 Fish Friend</option>
-          <option value="Turtle Tenant">🐢 Turtle Tenant</option>
-          <option value="Plant Person">🪴 Plant Person</option>
-          <option value="Bug Buddy">🪳 Bug Buddy</option>
-        </optgroup>
-        <optgroup label="🌱 Lifestyle Tags">
-          <option value="Child-Free">Child-Free</option>
-          <option value="Neurodivergent">Neurodivergent</option>
-          <option value="Creative at Heart">Creative at Heart</option>
-          <option value="Digital Nomad">Digital Nomad</option>
-        </optgroup>
-      </select>
-      <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple</small>
-    </div>
-
-
-    <div class="col-md-1">
-      <button type="submit" class="btn btn-primary w-100">🔍</button>
-    </div>
-
-  </div>
-</form>
-
-    </form>
-
-    <!-- 📍 Location button -->
-    <div class="text-end mb-4">
-      <button class="btn btn-outline-primary btn-sm" onclick="requestUserLocation()">
-        📍 Use My Location for Nearby Matches
-      </button>
-      <small class="d-block text-muted mt-1">
-        We’ll never share your exact location — this just helps prioritize nearby users.
-      </small>
-    </div>
-
-    {% if users %}
-      <div class="row row-cols-1 row-cols-md-2 g-4">
-        {% for user, score in users %}
-          <div class="col">
-            <div class="card h-100 shadow-sm position-relative">
-              <img src="{{ url_for('static', filename=user[6] or 'profilepics/default_profile_pic.png') }}"
-                   class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
-
-              <div class="card-body">
-                <!-- Name + Age -->
-                <h5 class="card-title mb-1">{{ user[0] }}, {{ user[2] or '?' }}</h5>
-
-                <!-- Location -->
-                <p class="card-text text-muted mb-2">{{ user[3] or 'No location' }}</p>
-
-                <!-- 🏷️ Main Tag -->
-                {% if user[10] %}
-                  <span class="badge bg-primary fs-6">{{ user[10] }}</span>
-                {% endif %}
-
-                <!-- ➕ 2 Additional Tags -->
-                {% set tag_list = user[11].split(',') if user[11] else [] %}
-                <div class="mt-2">
-                  {% for tag in tag_list[:2] %}
-                    <span class="badge bg-secondary me-1">{{ tag }}</span>
-                  {% endfor %}
-                </div>
-
-                <!-- 💘 Match Score Badge -->
-                {% if score >= 4 %}
-                  <div class="mt-2">
-                    <span class="badge bg-success">💘 High Match</span>
-                  </div>
-                {% endif %}
-              </div>
-
-
-              <button class="btn btn-light border rounded-circle like-btn position-absolute bottom-0 end-0 m-2"
-                      data-username="{{ user[1] }}" aria-label="Like {{ user[0] }}">
-                🦝
-              </button>
-            </div>
-          </div>
+      <div id="preferred-tags" class="d-flex flex-wrap gap-2">
+        <span class="text-muted w-100">🐾 Pet Tags</span>
+        {% for tag in ["Fully Pet-Free", "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy"] %}
+          <button type="button" class="btn btn-outline-primary btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
+        {% endfor %}
+        <span class="text-muted w-100 mt-2">🌱 Lifestyle Tags</span>
+        {% for tag in ["Child-Free", "Single Parent", "Divorced", "Parent (Don't live with kids)", "Parent (Kids part-time)", "Open to Kids", "Neurodivergent", "Creative at Heart", "Digital Nomad", "Career-Focused", "Just Looking for Friends", "Monogamous", "Open to ENM"] %}
+          <button type="button" class="btn btn-outline-primary btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
         {% endfor %}
       </div>
-    {% else %}
-      <div class="alert alert-info text-center mt-5">
-        No users match your filter criteria. Try adjusting your filters!
-      </div>
-    {% endif %}
+      <input type="hidden" name="preferred_tags" id="preferredTagsInput">
+    </div>
 
-    <div class="text-center mt-4">
-      <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">Back to Profile</a>
+    <!-- 🚫 Dealbreaker Tags -->
+    <div class="mb-3">
+      <label class="form-label">Dealbreaker Tags</label>
+      <div id="dealbreaker-tags" class="d-flex flex-wrap gap-2">
+        <span class="text-muted w-100">🐾 Pet Tags</span>
+        {% for tag in ["Fully Pet-Free", "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy"] %}
+          <button type="button" class="btn btn-outline-danger btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
+        {% endfor %}
+        <span class="text-muted w-100 mt-2">🌱 Lifestyle Tags</span>
+        {% for tag in ["Child-Free", "Single Parent", "Divorced", "Parent (Don't live with kids)", "Parent (Kids part-time)", "Open to Kids", "Neurodivergent", "Creative at Heart", "Digital Nomad", "Career-Focused", "Just Looking for Friends", "Monogamous", "Open to ENM"] %}
+          <button type="button" class="btn btn-outline-danger btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="dealbreaker_tags" id="dealbreakerTagsInput">
+    </div>
+
+    <!-- 📍 Location Button -->
+    <div class="text-end mb-3">
+      <button type="button" class="btn btn-outline-primary btn-sm" onclick="requestUserLocation()">📍 Use My Location</button>
+      <small class="d-block text-muted mt-1">Just for match boost. Never shown to others.</small>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+  </form>
+</div>
+
+<!-- 📸 Main Content Area -->
+<div id="mainContentWrapper">
+  <div class="container-fluid mt-4">
+    <div class="row">
+      <div class="col-12">
+        {% if users %}
+          <div class="row row-cols-1 row-cols-md-2 g-4">
+            {% for user, score in users %}
+              <div class="col">
+                <div class="card h-100 shadow-sm position-relative">
+                  <img src="{{ url_for('static', filename=user[6] or 'profilepics/default_profile_pic.png') }}"
+                       class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
+
+                  <div class="card-body">
+                    <h5 class="card-title mb-1">{{ user[0] }}, {{ user[2] or '?' }}</h5>
+                    <p class="card-text text-muted mb-2">{{ user[3] or 'No location' }}</p>
+
+                    {% if user[10] %}
+                      <span class="badge bg-primary fs-6">{{ user[10] }}</span>
+                    {% endif %}
+
+                    {% set tag_list = user[11].split(',') if user[11] else [] %}
+                    <div class="mt-2">
+                      {% for tag in tag_list[:2] %}
+                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                      {% endfor %}
+                    </div>
+
+                    {% if score >= 4 %}
+                      <div class="mt-2"><span class="badge bg-success">💘 High Match</span></div>
+                    {% endif %}
+                  </div>
+
+                  <button class="btn btn-light border rounded-circle like-btn position-absolute bottom-0 end-0 m-2"
+                          data-username="{{ user[1] }}" aria-label="Like {{ user[0] }}">
+                    🦝
+                  </button>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-info text-center mt-4">No users match your filters. Try again!</div>
+        {% endif %}
+
+        <div class="text-center mt-4">
+          <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">Back to Profile</a>
+        </div>
+      </div>
     </div>
   </div>
+</div>
 
-  <script>
-    document.querySelectorAll(".like-btn").forEach(button => {
-      button.addEventListener("click", function () {
-        const username = this.dataset.username;
-        const button = this;
+<script>
+function toggleFilters() {
+  const sidebar = document.getElementById("filterSidebar");
+  const mainWrapper = document.getElementById("mainContentWrapper");
+  sidebar.classList.toggle("show");
+  mainWrapper.classList.toggle("shifted");
+}
+</script>
+<script>
+function setupTagChips(containerId, hiddenInputId) {
+  const container = document.getElementById(containerId);
+  const hiddenInput = document.getElementById(hiddenInputId);
+  const selectedTags = new Set();
 
-        fetch(`/like/${username}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({})
-        })
-        .then(response => {
-          if (response.ok) {
-            button.classList.add("liked");
-            button.innerText = "❤️";
-            const card = button.closest(".col");
-            card.style.transition = "opacity 0.4s ease";
-            card.style.opacity = 0;
-            setTimeout(() => card.remove(), 400);
-          } else {
-            alert("Error liking user.");
-          }
-        });
-      });
-    });
-
-    function sendLocationToServer(lat, lon) {
-      fetch("/set_location", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ latitude: lat, longitude: lon })
-      });
-    }
-
-    function requestUserLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          sendLocationToServer(position.coords.latitude, position.coords.longitude);
-        });
+  container.addEventListener("click", function (e) {
+    if (e.target.classList.contains("tag-chip")) {
+      const tag = e.target.dataset.tag;
+      if (selectedTags.has(tag)) {
+        selectedTags.delete(tag);
+        e.target.classList.remove("active");
       } else {
-        alert("Your browser doesn't support location services.");
+        selectedTags.add(tag);
+        e.target.classList.add("active");
       }
+      hiddenInput.value = Array.from(selectedTags).join(",");
     }
-  </script>
+  });
+}
+setupTagChips("preferred-tags", "preferredTagsInput");
+setupTagChips("dealbreaker-tags", "dealbreakerTagsInput");
+</script>
+<script>
+const minSlider = document.getElementById("minAge");
+const maxSlider = document.getElementById("maxAge");
+const minLabel = document.getElementById("minAgeLabel");
+const maxLabel = document.getElementById("maxAgeLabel");
+function syncAgeSliders() {
+  let minVal = parseInt(minSlider.value);
+  let maxVal = parseInt(maxSlider.value);
+  if (minVal > maxVal) {
+    [minSlider.value, maxSlider.value] = [maxVal, minVal];
+    [minVal, maxVal] = [maxVal, minVal];
+  }
+  minLabel.textContent = minVal;
+  maxLabel.textContent = maxVal;
+}
+minSlider.addEventListener("input", syncAgeSliders);
+maxSlider.addEventListener("input", syncAgeSliders);
+syncAgeSliders();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
