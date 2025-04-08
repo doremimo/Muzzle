@@ -814,13 +814,23 @@ def messages():
     c = conn.cursor()
 
     c.execute("""
-        SELECT u.username, u.display_name, u.profile_pic, MAX(m.timestamp) AS last_message_time
-        FROM users u
-        JOIN messages m ON (u.username = m.sender OR u.username = m.recipient)
-        WHERE ? IN (m.sender, m.recipient) AND u.username != ?
-        GROUP BY u.username, u.display_name, u.profile_pic
-        ORDER BY last_message_time DESC
-    """, (current_user, current_user))
+           SELECT u.username, u.display_name, u.profile_pic,
+                  MAX(m.timestamp) as last_message_time,
+                  SUM(CASE WHEN m.recipient = ? AND m.is_read = 0 AND m.sender = u.username THEN 1 ELSE 0 END) as unread_count,
+                  (
+                      SELECT content
+                      FROM messages
+                      WHERE (sender = u.username AND recipient = ?)
+                         OR (sender = ? AND recipient = u.username)
+                      ORDER BY timestamp DESC
+                      LIMIT 1
+                  ) as last_message_text
+           FROM users u
+           JOIN messages m ON (u.username = m.sender OR u.username = m.recipient)
+           WHERE ? IN (m.sender, m.recipient) AND u.username != ?
+           GROUP BY u.username, u.display_name, u.profile_pic
+           ORDER BY last_message_time DESC
+       """, (current_user, current_user, current_user, current_user, current_user))
 
     chats = c.fetchall()
     conn.close()
@@ -968,6 +978,18 @@ def report(username):
 def logout():
     session.pop("username", None)
     return redirect(url_for("login"))
+
+@app.context_processor
+def inject_unread_count():
+    if "username" in session:
+        conn = sqlite3.connect("users.db")
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM messages WHERE recipient = ? AND is_read = 0", (session["username"],))
+        unread = c.fetchone()[0]
+        conn.close()
+        return {"global_unread_count": unread}
+    return {"global_unread_count": 0}
+
 
 @app.route("/dev-login")
 def dev_login():

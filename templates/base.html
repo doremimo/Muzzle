@@ -81,7 +81,15 @@
 
       <div>
         <a href="{{ url_for('matches') }}" class="btn btn-outline-success me-2">💘 Matches</a>
-        <a href="{{ url_for('messages') }}" class="btn btn-outline-primary">📩 Messages</a>
+        <a href="{{ url_for('messages') }}" class="btn btn-outline-primary position-relative">
+          📩 Messages
+          {% if global_unread_count > 0 %}
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger-subtle text-danger-emphasis">
+            {{ '99+' if global_unread_count > 99 else global_unread_count }}
+          </span>
+          {% endif %}
+        </a>
+
       </div>
     </div>
   </nav>
