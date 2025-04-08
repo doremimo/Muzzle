@@ -57,6 +57,16 @@
     border-color: #b39ddb;
 }
 
+        .display-name-other {
+    color: #4b0082; /* Dark purple */
+    font-weight: 600;
+}
+
+
+        #chatMessages {
+    scroll-behavior: smooth;
+}
+
 
 
     </style>
@@ -70,7 +80,11 @@
             <input type="text" id="messageSearch" class="form-control" placeholder="Search messages...">
         </div>
 
-        <div class="border rounded p-3 mb-3" style="height: 300px; overflow-y: scroll; background: #f8f9fa;" id="chatMessages">
+        <div class="border rounded p-3 mb-3"
+     style="height: 300px; overflow-y: scroll; background: linear-gradient(to bottom right, #e7d5fa, #ffffff);"
+     id="chatMessages">
+
+
             {% for sender, content, timestamp, is_read, message_id, image_url in messages %}
                 <div class="mb-2 message-entry">
                     <div class="mb-2 d-flex justify-content-between align-items-start">
@@ -79,9 +93,11 @@
                                 {% if sender == session['username'] %}
                                     You:
                                 {% else %}
-                                    {{ other_display_name }}:
+                                    <span class="display-name-other">{{ other_display_name }}</span>:
                                 {% endif %}
                             </strong>
+
+
 
                             {% if content %}{{ content }}{% endif %}
                             {% if image_url %}
@@ -189,6 +205,16 @@ document.querySelectorAll(".delete-form").forEach(form => {
     });
 });
 </script>
+<script>
+    window.addEventListener("load", function () {
+        setTimeout(() => {
+            const chatBox = document.getElementById("chatMessages");
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }, 100);  // small delay to allow layout/images to render
+    });
+</script>
+
+
 
 
 </body>

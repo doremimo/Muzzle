@@ -821,15 +821,15 @@ def message_thread(username):
             'sender': current_user,
             'content': message,
             'image_url': image_url,
-            'timestamp': "Just now",  # Optionally format the timestamp as per your preference
+            'timestamp': "Just now",
             'is_read': 0,
-            'message_id': c.lastrowid  # This is the ID of the newly inserted message
+            'message_id': c.lastrowid
         })
 
-    # Fetch display name of the other user
+    # Fetch display name of the other user (runs on GET)
     c.execute("SELECT display_name FROM users WHERE username = ?", (username,))
     row = c.fetchone()
-    other_display_name = row[0] if row else username  # Fallback to username
+    other_display_name = row[0] if row else username
 
     # Mark unread messages from the other user as read
     c.execute("""
@@ -852,8 +852,11 @@ def message_thread(username):
     messages = c.fetchall()
     conn.close()
 
-    return render_template("messages.html", messages=messages,
-                           other_user=username,  other_display_name=other_display_name)
+    return render_template("messages.html",
+                           messages=messages,
+                           other_user=username,
+                           other_display_name=other_display_name)
+
 
 
 
