@@ -816,6 +816,21 @@ def message_thread(username):
             """, (current_user, username, message, image_url))
             conn.commit()
 
+        # Respond with the new message (for AJAX)
+        return jsonify({
+            'sender': current_user,
+            'content': message,
+            'image_url': image_url,
+            'timestamp': "Just now",  # Optionally format the timestamp as per your preference
+            'is_read': 0,
+            'message_id': c.lastrowid  # This is the ID of the newly inserted message
+        })
+
+    # Fetch display name of the other user
+    c.execute("SELECT display_name FROM users WHERE username = ?", (username,))
+    row = c.fetchone()
+    other_display_name = row[0] if row else username  # Fallback to username
+
     # Mark unread messages from the other user as read
     c.execute("""
         UPDATE messages
@@ -837,7 +852,9 @@ def message_thread(username):
     messages = c.fetchall()
     conn.close()
 
-    return render_template("messages.html", messages=messages, other_user=username)
+    return render_template("messages.html", messages=messages,
+                           other_user=username,  other_display_name=other_display_name)
+
 
 
 
@@ -871,7 +888,8 @@ def delete_message(message_id):
     conn.commit()
     conn.close()
 
-    return redirect(request.referrer or url_for("matches"))
+    return jsonify({"success": True, "message_id": message_id})
+
 
 
 

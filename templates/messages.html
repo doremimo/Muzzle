@@ -4,49 +4,192 @@
     <meta charset="UTF-8">
     <title>Chat with {{ other_user }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Customize the chat message bubble */
+        .message-entry {
+    background-color: #ffffff;  /* White background */
+    border-radius: 20px;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.message-entry.sent {
+    background-color: #ffffff;  /* White background for sent messages */
+    align-self: flex-end;
+}
+
+.message-entry.received {
+    background-color: #ffffff;  /* White background for received messages */
+    align-self: flex-start;
+}
+
+.timestamp {
+    font-size: 0.8rem;
+    color: #6c757d;
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    color: white;
+    background-color: #28a745; /* green for "Read" */
+    padding: 2px 8px;
+    border-radius: 15px;
+}
+
+.status-badge.unread {
+    background-color: #dc3545; /* red for "Unread" */
+}
+
+        .btn-outline-purple {
+    color: #7e57c2;
+    border-color: #cbbde2;
+}
+
+.btn-outline-purple:hover {
+    background-color: #e8dcf7;
+    border-color: #b39ddb;
+}
+
+
+
+    </style>
 </head>
 <body>
     <div class="container mt-5" style="max-width: 600px;">
-        <h3 class="mb-4">💬 Chat with {{ other_user }}</h3>
+        <h3 class="mb-4">💬 Chat with {{ other_display_name }} (@{{ other_user }})</h3>
 
-        <div class="border rounded p-3 mb-3" style="height: 300px; overflow-y: scroll; background: #f8f9fa;">
-            {% for sender, content, timestamp, is_read, message_id, image_url in messages %}
-                <div class="mb-2 d-flex justify-content-between align-items-start">
-                    <div>
-                        <strong>{{ sender }}:</strong>
-                        {% if content %}{{ content }}{% endif %}
-                        {% if image_url %}
-                            <div><img src="{{ image_url }}" alt="Image" class="img-fluid mt-2" style="max-height: 200px;"></div>
-                        {% endif %}
-                        <div class="text-muted small">
-                            {{ timestamp }}
-                            {% if sender == session['username'] %}
-                                • <span class="{{ 'text-success' if is_read else 'text-muted' }}">
-                                    {{ 'Read' if is_read else 'Sent' }}
-                                </span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <form method="POST" action="{{ url_for('delete_message', message_id=message_id) }}">
-                        <button type="submit" class="btn btn-sm btn-outline-danger ms-2" title="Delete for me">🗑️</button>
-                    </form>
-                </div>
-            {% endfor %}
 
+        <div class="mb-3">
+            <input type="text" id="messageSearch" class="form-control" placeholder="Search messages...">
         </div>
 
-       <form method="POST" enctype="multipart/form-data">
+        <div class="border rounded p-3 mb-3" style="height: 300px; overflow-y: scroll; background: #f8f9fa;" id="chatMessages">
+            {% for sender, content, timestamp, is_read, message_id, image_url in messages %}
+                <div class="mb-2 message-entry">
+                    <div class="mb-2 d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>
+                                {% if sender == session['username'] %}
+                                    You:
+                                {% else %}
+                                    {{ other_display_name }}:
+                                {% endif %}
+                            </strong>
+
+                            {% if content %}{{ content }}{% endif %}
+                            {% if image_url %}
+                                <div><img src="{{ image_url }}" alt="Image" class="img-fluid mt-2" style="max-height: 200px;"></div>
+                            {% endif %}
+                            <div class="text-muted small">
+                                {{ timestamp }}
+                                {% if sender == session['username'] %}
+                                    • <span class="{{ 'text-success' if is_read else 'text-muted' }}">
+                                        {{ 'Read' if is_read else 'Sent' }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- The DELETE BUTTON FORM -->
+                        <form method="POST" class="delete-form" action="{{ url_for('delete_message', message_id=message_id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-purple ms-2" title="Delete for me">🗑️</button>
+                        </form>
+                    </div>
+                </div> <!-- End of message-entry -->
+
+
+            {% endfor %}
+        </div>
+
+        <form id="messageForm" method="POST" enctype="multipart/form-data">
             <div class="input-group">
-                <input type="text" name="message" class="form-control" placeholder="Type a message...">
+                <input type="text" id="messageInput" name="message" class="form-control" placeholder="Type a message...">
                 <input type="file" name="image" accept="image/*" class="form-control">
                 <button type="submit" class="btn btn-primary">Send</button>
             </div>
-       </form>
-
+        </form>
 
         <div class="mt-4 text-center">
             <a href="{{ url_for('matches') }}" class="btn btn-outline-secondary">Back to Matches</a>
         </div>
     </div>
+
+    <script>
+    // Handle search functionality
+    document.getElementById("messageSearch").addEventListener("input", function () {
+        const searchTerm = this.value.toLowerCase();
+        const messages = document.querySelectorAll(".message-entry");
+
+        messages.forEach(msg => {
+            const text = msg.textContent.toLowerCase();
+            msg.style.display = text.includes(searchTerm) ? "" : "none";
+        });
+    });
+
+    // Handle sending messages via AJAX
+    document.getElementById("messageForm").addEventListener("submit", function (event) {
+        event.preventDefault();  // Prevent normal form submission
+
+        const message = document.getElementById("messageInput").value;
+        const formData = new FormData(this);  // Capture form data (message & image)
+
+        fetch("{{ url_for('message_thread', username=other_user) }}", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Add the new message to the chat window
+            const messageHtml = `
+                <div class="mb-2 message-entry sent">
+                    <div class="mb-2 d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${data.sender}:</strong>
+                            ${data.content || ""}
+                            ${data.image_url ? `<div><img src="${data.image_url}" alt="Image" class="img-fluid mt-2" style="max-height: 200px;"></div>` : ""}
+                            <div class="text-muted small">Just now</div>
+                        </div>
+                    </div>
+                </div>`;
+            document.getElementById("chatMessages").innerHTML += messageHtml;
+            document.getElementById("messageInput").value = "";  // Clear the input field
+            // Optionally, scroll to the bottom
+            document.getElementById("chatMessages").scrollTop = document.getElementById("chatMessages").scrollHeight;
+        })
+        .catch(error => {
+            console.error("Error sending message:", error);
+        });
+    });
+    </script>
+<script>
+document.querySelectorAll(".delete-form").forEach(form => {
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();  // prevent default form submit
+
+        fetch(this.action, {
+            method: "POST",
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Hide or remove the message element
+                this.closest(".message-entry").remove();
+            }
+        })
+        .catch(err => {
+            console.error("Error deleting message:", err);
+        });
+    });
+});
+</script>
+
+
 </body>
 </html>
