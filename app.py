@@ -803,6 +803,33 @@ def unmatch(username):
     flash(f"You unmatched with @{username}.", "info")
     return redirect(url_for("matches"))
 
+@app.route("/messages")
+def messages():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    current_user = session["username"]
+
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+
+    c.execute("""
+        SELECT u.username, u.display_name, u.profile_pic, MAX(m.timestamp) AS last_message_time
+        FROM users u
+        JOIN messages m ON (u.username = m.sender OR u.username = m.recipient)
+        WHERE ? IN (m.sender, m.recipient) AND u.username != ?
+        GROUP BY u.username, u.display_name, u.profile_pic
+        ORDER BY last_message_time DESC
+    """, (current_user, current_user))
+
+    chats = c.fetchall()
+    conn.close()
+
+    return render_template("message_list.html", chats=chats)
+
+
+
+
 
 @app.route("/messages/<username>", methods=["GET", "POST"])
 def message_thread(username):

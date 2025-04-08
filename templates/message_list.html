@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+  <h2 class="mb-4">💬 Your Chats</h2>
+
+  {% if chats %}
+  <div class="list-group shadow-sm rounded-4 overflow-hidden">
+    {% for chat in chats %}
+    <a href="{{ url_for('message_thread', username=chat[0]) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        {% if chat[2] %}
+          <img src="{{ url_for('static', filename=chat[2]) }}" class="rounded-circle me-3" alt="Profile Pic" style="width:40px;height:40px;object-fit:cover;">
+        {% else %}
+          <span class="rounded-circle bg-primary-subtle text-primary-emphasis fw-bold d-flex justify-content-center align-items-center me-3"
+                style="width: 40px; height: 40px;">
+            {{ chat[1][0].upper() }}
+          </span>
+        {% endif %}
+        <span class="fs-5 text-dark">{{ chat[1] or chat[0] }}</span>
+      </div>
+      <small class="text-secondary">
+        {{ chat[3][:16] }}
+      </small>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info">
+    You don't have any chats yet. Go find someone interesting! 🌟
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
