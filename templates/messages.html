@@ -67,6 +67,21 @@
     scroll-behavior: smooth;
 }
 
+        .icebreaker-tag {
+    background-color: #f3eaff;
+    color: #4b0082;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.icebreaker-tag:hover {
+    background-color: #e3d3ff;
+}
+
 
 
     </style>
@@ -74,6 +89,17 @@
 <body>
     <div class="container mt-5" style="max-width: 600px;">
         <h3 class="mb-4">💬 Chat with {{ other_display_name }} (@{{ other_user }})</h3>
+        {% if messages|length == 0 %}
+        <div class="mb-3">
+            <div class="fw-bold mb-2">🐾 Icebreakers:</div>
+            <div class="d-flex flex-wrap gap-2">
+                {% for q in starter_questions %}
+                    <button type="button" class="icebreaker-tag starter-btn">{{ q }}</button>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
 
 
         <div class="mb-3">
@@ -212,6 +238,48 @@ document.querySelectorAll(".delete-form").forEach(form => {
             chatBox.scrollTop = chatBox.scrollHeight;
         }, 100);  // small delay to allow layout/images to render
     });
+</script>
+
+<script>
+    // Auto-scroll on page load (leave this as is if you have it)
+document.querySelectorAll(".starter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const message = btn.textContent;
+        const formData = new FormData();
+        formData.append("message", message);
+
+        fetch(window.location.href, {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const chatBox = document.getElementById("chatMessages");
+            const messageHtml = `
+                <div class="mb-2 message-entry sent">
+                    <div class="mb-2 d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>You:</strong>
+                            ${data.content || ""}
+                            ${data.image_url ? `<div><img src="${data.image_url}" alt="Image" class="img-fluid mt-2" style="max-height: 200px;"></div>` : ""}
+                            <div class="message-meta text-muted small">Just now • Sent</div>
+                        </div>
+                        <form method="POST" class="delete-form" action="/delete_message/${data.message_id}">
+                            <button type="submit" class="btn btn-sm btn-outline-purple ms-2" title="Delete for me">🗑️</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            chatBox.innerHTML += messageHtml;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // ❌ Just remove the clicked button, not the whole block
+            btn.remove();
+        })
+        .catch(error => console.error("Error sending starter message:", error));
+    });
+});
+
 </script>
 
 

@@ -750,9 +750,10 @@ def matches():
     if mutual_matches:
         placeholders = ",".join("?" * len(mutual_matches))
         c.execute(f"""
-            SELECT display_name, username, age, location, favorite_animal, dog_free_reason, profile_pic
+            SELECT display_name, username, age, location, favorite_animal, dog_free_reason, profile_pic, main_tag
             FROM users WHERE username IN ({placeholders})
         """, tuple(mutual_matches))
+
         match_list = c.fetchall()
     else:
         match_list = []
@@ -784,6 +785,23 @@ def like(username):
     conn.close()
     return redirect(url_for("browse"))
 
+@app.route("/unmatch/<username>", methods=["POST"])
+def unmatch(username):
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    current_user = session["username"]
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+
+    # Remove both sides of the match
+    c.execute("DELETE FROM likes WHERE liker = ? AND liked = ?", (current_user, username))
+    c.execute("DELETE FROM likes WHERE liker = ? AND liked = ?", (username, current_user))
+    conn.commit()
+    conn.close()
+
+    flash(f"You unmatched with @{username}.", "info")
+    return redirect(url_for("matches"))
 
 
 @app.route("/messages/<username>", methods=["GET", "POST"])
@@ -852,13 +870,19 @@ def message_thread(username):
     messages = c.fetchall()
     conn.close()
 
+    starter_questions = [
+        "What’s your favorite animal (non-dog edition)?",
+        "If you had to live with a dog, what’s your survival plan?",
+        "Tell me your most ridiculous dog encounter story.",
+        "How do you respond to 'but my dog is friendly'?",
+    ]
+
     return render_template("messages.html",
                            messages=messages,
                            other_user=username,
-                           other_display_name=other_display_name)
-
-
-
+                           other_display_name=other_display_name,
+                           starter_questions=starter_questions
+                           )
 
 
 @app.route("/delete_message/<int:message_id>", methods=["POST"])
