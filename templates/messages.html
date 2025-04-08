@@ -10,20 +10,39 @@
         <h3 class="mb-4">💬 Chat with {{ other_user }}</h3>
 
         <div class="border rounded p-3 mb-3" style="height: 300px; overflow-y: scroll; background: #f8f9fa;">
-            {% for sender, content, timestamp in messages %}
-                <div class="mb-2">
-                    <strong>{{ sender }}:</strong> {{ content }}
-                    <div class="text-muted small">{{ timestamp }}</div>
+            {% for sender, content, timestamp, is_read, message_id, image_url in messages %}
+                <div class="mb-2 d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>{{ sender }}:</strong>
+                        {% if content %}{{ content }}{% endif %}
+                        {% if image_url %}
+                            <div><img src="{{ image_url }}" alt="Image" class="img-fluid mt-2" style="max-height: 200px;"></div>
+                        {% endif %}
+                        <div class="text-muted small">
+                            {{ timestamp }}
+                            {% if sender == session['username'] %}
+                                • <span class="{{ 'text-success' if is_read else 'text-muted' }}">
+                                    {{ 'Read' if is_read else 'Sent' }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <form method="POST" action="{{ url_for('delete_message', message_id=message_id) }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger ms-2" title="Delete for me">🗑️</button>
+                    </form>
                 </div>
             {% endfor %}
+
         </div>
 
-        <form method="POST">
+       <form method="POST" enctype="multipart/form-data">
             <div class="input-group">
-                <input type="text" name="message" class="form-control" placeholder="Type a message..." required>
+                <input type="text" name="message" class="form-control" placeholder="Type a message...">
+                <input type="file" name="image" accept="image/*" class="form-control">
                 <button type="submit" class="btn btn-primary">Send</button>
             </div>
-        </form>
+       </form>
+
 
         <div class="mt-4 text-center">
             <a href="{{ url_for('matches') }}" class="btn btn-outline-secondary">Back to Matches</a>

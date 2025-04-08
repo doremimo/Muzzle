@@ -69,9 +69,12 @@ c.execute("""
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         sender TEXT NOT NULL,
         recipient TEXT NOT NULL,
-        content TEXT NOT NULL,
+        content TEXT,
+        image_url TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        is_read INTEGER DEFAULT 0
+        is_read INTEGER DEFAULT 0,
+        is_deleted_by_sender INTEGER DEFAULT 0,
+        is_deleted_by_recipient INTEGER DEFAULT 0
     )
 """)
 

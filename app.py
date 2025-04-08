@@ -18,6 +18,8 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+
 
 mail = Mail(app)
 
@@ -97,8 +99,8 @@ def signup():
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 username, hashed_password, display_name, age, location,
-                favorite_animal, dog_free_reason, "", bio, gender, interests,
-                main_tag, tags_string
+                favorite_animal, dog_free_reason, "", bio,
+                gender, "", 1, 0, interests, main_tag, tags_string
             ))
 
             conn.commit()
@@ -372,6 +374,7 @@ def settings():
         location = request.form.get("location", "")
         favorite_animal = request.form.get("favorite_animal", "")
         dog_free_reason = request.form.get("dog_free_reason", "")
+        bio = request.form.get("bio", "")
         interests = request.form.get("interests", "")
         main_tag = request.form.get("main_tag", "")
         tags = request.form.getlist("tags")
@@ -663,12 +666,13 @@ def view_user_profile(username):
     # Get user info
     c.execute("""
         SELECT display_name, age, location, favorite_animal,
-               dog_free_reason, profile_pic, bio, gender, main_tag, tags,
-               gallery_image_1, gallery_image_2, gallery_image_3,
-               gallery_image_4, gallery_image_5
+       dog_free_reason, profile_pic, bio, gender, interests, main_tag, tags,
+       gallery_image_1, gallery_image_2, gallery_image_3,
+       gallery_image_4, gallery_image_5
         FROM users WHERE username = ?
     """, (username,))
     result = c.fetchone()
+
     conn.close()
 
     if not result:
@@ -676,7 +680,7 @@ def view_user_profile(username):
         return redirect(url_for("browse"))
 
     (display_name, age, location, favorite_animal, dog_free_reason,
-     profile_pic, bio, gender, main_tag, tags_string,
+     profile_pic, bio, gender, interests, main_tag, tags_string,
      g1, g2, g3, g4, g5) = result or (None,) * 16
 
     gallery_images = [g for g in [g1, g2, g3, g4, g5] if g]
@@ -766,30 +770,45 @@ def message_thread(username):
         return redirect(url_for("login"))
 
     current_user = session["username"]
-
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
 
     # Handle new message being sent
     if request.method == "POST":
-        message = request.form["message"]
-        if message.strip():
-            c.execute("INSERT INTO messages (sender, recipient, content) VALUES (?, ?, ?)",
-                      (current_user, username, message))
+        message = request.form.get("message", "").strip()
+        image = request.files.get("image")
+        image_url = None
+
+        # Save uploaded image if it exists and is valid
+        if image and allowed_file(image.filename):
+            os.makedirs("static/uploads", exist_ok=True)
+            filename = secure_filename(image.filename)
+            image_path = os.path.join("static/uploads", filename)
+            image.save(image_path)
+            image_url = "/" + image_path  # For web use
+
+        if message or image_url:
+            c.execute("""
+                INSERT INTO messages (sender, recipient, content, image_url)
+                VALUES (?, ?, ?, ?)
+            """, (current_user, username, message, image_url))
             conn.commit()
 
-    # Mark message from the other user as read
+    # Mark unread messages from the other user as read
     c.execute("""
         UPDATE messages
         SET is_read = 1
         WHERE sender = ? AND recipient = ? AND is_read = 0
-    """), (username, current_user)
+    """, (username, current_user))
 
-    # Fetch conversation between current_user and the other user
+    # Fetch visible conversation messages
     c.execute("""
-        SELECT sender, content, timestamp FROM messages
-        WHERE (sender = ? AND recipient = ?)
-           OR (sender = ? AND recipient = ?)
+        SELECT sender, content, timestamp, is_read, id, image_url FROM messages
+        WHERE (
+            (sender = ? AND recipient = ? AND is_deleted_by_sender = 0)
+            OR
+            (sender = ? AND recipient = ? AND is_deleted_by_recipient = 0)
+        )
         ORDER BY timestamp ASC
     """, (current_user, username, username, current_user))
 
@@ -797,6 +816,40 @@ def message_thread(username):
     conn.close()
 
     return render_template("messages.html", messages=messages, other_user=username)
+
+
+
+@app.route("/delete_message/<int:message_id>", methods=["POST"])
+def delete_message(message_id):
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    current_user = session["username"]
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+
+    # Check who sent/received this message
+    c.execute("SELECT sender, recipient FROM messages WHERE id = ?", (message_id,))
+    result = c.fetchone()
+
+    if not result:
+        conn.close()
+        return "Message not found", 404
+
+    sender, recipient = result
+
+    if current_user == sender:
+        c.execute("UPDATE messages SET is_deleted_by_sender = 1 WHERE id = ?", (message_id,))
+    elif current_user == recipient:
+        c.execute("UPDATE messages SET is_deleted_by_recipient = 1 WHERE id = ?", (message_id,))
+    else:
+        conn.close()
+        return "Unauthorized", 403
+
+    conn.commit()
+    conn.close()
+
+    return redirect(request.referrer or url_for("matches"))
 
 
 
