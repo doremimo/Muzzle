@@ -39,9 +39,31 @@ google = oauth.register(
 def home():
     if "username" in session:
         return redirect(url_for("profile"))
-    return render_template("welcome.html")
+    return redirect(url_for("login_options"))  # always show consistent login choices
 
+@app.route("/login")
+def login_options():
+    return render_template("login_options.html")  # ← rename your old welcome.html to this
 
+@app.route("/manual-login", methods=["GET", "POST"])
+def manual_login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        conn = sqlite3.connect("users.db")
+        c = conn.cursor()
+        c.execute("SELECT password FROM users WHERE username = ?", (username,))
+        result = c.fetchone()
+        conn.close()
+
+        if result and check_password_hash(result[0], password):
+            session["username"] = username
+            return redirect(url_for("profile"))
+        else:
+            flash("Invalid username or password!", "danger")
+
+    return render_template("manual_login.html", username=request.form.get("username", ""))
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -132,10 +154,10 @@ def login():
             return redirect(url_for("profile"))
         else:
             flash("Invalid username or password!", "danger")
-            return render_template("login.html", username=username)
+            return render_template("login_options.html", username=username)
 
     # Handle GET request
-    return render_template("login.html", username="")
+    return render_template("login_options.html", username="")
 
 @app.route('/login/google')
 def google_login():
