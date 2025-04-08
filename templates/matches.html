@@ -1,64 +1,54 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Your Matches</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container mt-5" style="max-width: 800px;">
-        <h2 class="text-center mb-4">💘 Your Matches</h2>
+{% extends "base.html" %}
 
-        {% if matches %}
-          <div class="row row-cols-1 row-cols-md-2 g-4">
-            {% for match in matches %}
-              <div class="col user-card">
-                <div class="card h-100 shadow-sm position-relative">
-                  <img src="{{ url_for('static', filename=match[6] or 'profilepics/default_profile_pic.png') }}"
-                       class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
-                  <div class="card-body">
-                    <h5 class="card-title mb-1">{{ match[0] or match[1] }}, {{ match[2] or '?' }}</h5>
-                    <p class="card-text text-muted mb-2">{{ match[3] or 'No location' }}</p>
+{% block content %}
+  <div class="container mt-5" style="max-width: 800px;">
+    <h2 class="text-center mb-4">💘 Your Matches</h2>
 
-                    {% set tag_list = match[7].split(',') if match[7] else [] %}
+    {% if matches %}
+      <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for match in matches %}
+          <div class="col user-card">
+            <div class="card h-100 shadow-sm position-relative">
+              <img src="{{ url_for('static', filename=match[6] or 'profilepics/default_profile_pic.png') }}"
+                   class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
+              <div class="card-body">
+                <h5 class="card-title mb-1">{{ match[0] or match[1] }}, {{ match[2] or '?' }}</h5>
+                <p class="card-text text-muted mb-2">{{ match[3] or 'No location' }}</p>
 
-                    {% if tag_list %}
-                      <!-- Main tag (big & bold like in browse) -->
-                      <div class="mb-2">
-                        <span class="badge fs-6 bg-primary">{{ tag_list[0] }}</span>
-                      </div>
+                {% set tag_list = match[7].split(',') if match[7] else [] %}
 
-                      <!-- Small tags (up to 2 more) -->
-                      <div class="mb-2">
-                        {% for tag in tag_list[1:3] %}
-                          <span class="badge bg-secondary me-1">{{ tag }}</span>
-                        {% endfor %}
-                      </div>
-                    {% endif %}
-
-
-
-                    <div class="mt-2 text-center">
-                      <a href="{{ url_for('message_thread', username=match[1]) }}" class="btn btn-outline-primary w-100">📨 Message</a>
-                    </div>
-
-                      <!-- 💔 Unmatch button goes HERE, still inside card-body -->
-                    <form method="POST" action="{{ url_for('unmatch', username=match[1]) }}">
-                      <button type="submit" class="btn btn-outline-danger btn-sm w-100 mt-2">💔 Unmatch</button>
-                    </form>
+                {% if tag_list %}
+                  <!-- Main tag (big & bold like in browse) -->
+                  <div class="mb-2">
+                    <span class="badge fs-6 bg-primary">{{ tag_list[0] }}</span>
                   </div>
+
+                  <!-- Small tags (up to 2 more) -->
+                  <div class="mb-2">
+                    {% for tag in tag_list[1:3] %}
+                      <span class="badge bg-secondary me-1">{{ tag }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+
+                <div class="mt-2 text-center">
+                  <a href="{{ url_for('message_thread', username=match[1]) }}" class="btn btn-outline-primary w-100">📨 Message</a>
                 </div>
+
+                <form method="POST" action="{{ url_for('unmatch', username=match[1]) }}">
+                  <button type="submit" class="btn btn-outline-danger btn-sm w-100 mt-2">💔 Unmatch</button>
+                </form>
               </div>
-            {% endfor %}
+            </div>
           </div>
-        {% else %}
-          <div class="alert alert-info text-center mt-4">No matches yet. 💔 Keep liking!</div>
-        {% endif %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info text-center mt-4">No matches yet. 💔 Keep liking!</div>
+    {% endif %}
 
-
-        <div class="text-center mt-4">
-            <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">Back to Profile</a>
-        </div>
+    <div class="text-center mt-4">
+      <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">Back to Profile</a>
     </div>
-</body>
-</html>
+  </div>
+{% endblock %}
