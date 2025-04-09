@@ -6,6 +6,8 @@ from werkzeug.utils import secure_filename
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer
+from datetime import datetime
+
 
 
 load_dotenv()
@@ -232,6 +234,7 @@ def login():
         conn.close()
 
         if result and check_password_hash(result[0], password):
+            update_last_login(username)
             session["username"] = username
             return redirect(url_for("profile"))
         else:
@@ -290,6 +293,14 @@ def google_callback():
 
     return redirect(url_for("profile"))
 
+
+def update_last_login(username):
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    # Set the current timestamp for last_login
+    c.execute("UPDATE users SET last_login = ? WHERE username = ?", (datetime.now(), username))
+    conn.commit()
+    conn.close()
 
 #Verification Route
 @app.route('/verify/<token>')
@@ -807,32 +818,32 @@ def view_user_profile(username):
 
 
 
-@app.route("/matches")
+@app.route("/matches", methods=["GET", "POST"])
 def matches():
     if "username" not in session:
         return redirect(url_for("login"))
 
     current_user = session["username"]
+    sort_by = request.args.get("sort_by", "recent")  # Default to "recent"
 
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
 
-    # Get users who current_user liked
+    # Get users who liked the current user and vice versa
     c.execute("SELECT liked FROM likes WHERE liker = ?", (current_user,))
-    liked_users = set([row[0] for row in c.fetchall()])
+    liked_users = [row[0] for row in c.fetchall()]
 
-    # Get users who liked current_user
     c.execute("SELECT liker FROM likes WHERE liked = ?", (current_user,))
-    liked_by_users = set([row[0] for row in c.fetchall()])
+    liked_by_users = [row[0] for row in c.fetchall()]
 
     # Find mutual matches
-    mutual_matches = liked_users.intersection(liked_by_users)
+    mutual_matches = set(liked_users).intersection(liked_by_users)
 
-    # Get display info for those matched users
+    # Fetch details for those matched users
     if mutual_matches:
         placeholders = ",".join("?" * len(mutual_matches))
         c.execute(f"""
-            SELECT display_name, username, age, location, favorite_animal, dog_free_reason, profile_pic, main_tag
+            SELECT display_name, username, age, location, favorite_animal, profile_pic, main_tag, last_login
             FROM users WHERE username IN ({placeholders})
         """, tuple(mutual_matches))
 
@@ -840,9 +851,32 @@ def matches():
     else:
         match_list = []
 
+    # Sort the match list based on the selected sorting method
+    if sort_by == "name":
+        match_list.sort(key=lambda x: x[0].lower())  # Sort by name
+    elif sort_by == "recent":
+        match_list.sort(key=lambda x: x[7], reverse=True)  # Sort by last login date (assuming last_login is stored)
+    elif sort_by == "distance":
+        # Assuming you have latitude/longitude for each user
+        c.execute("SELECT latitude, longitude FROM users WHERE username = ?", (current_user,))
+        current_coords = c.fetchone()
+        current_lat, current_lon = current_coords if current_coords else (None, None)
+
+        # Sort by distance using the haversine formula
+        def haversine(lat1, lon1, lat2, lon2):
+            from math import radians, cos, sin, sqrt, asin
+            R = 6371  # Radius of Earth in km
+            dlat = radians(lat2 - lat1)
+            dlon = radians(lon2 - lon1)
+            a = sin(dlat / 2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2)**2
+            return R * 2 * asin(sqrt(a))
+
+        match_list.sort(key=lambda x: haversine(current_lat, current_lon, x[8], x[9]))  # Sort by distance (lat/lon in 8th and 9th positions)
+
     conn.close()
 
     return render_template("matches.html", matches=match_list)
+
 
 
 @app.route("/like/<username>", methods=["POST"])

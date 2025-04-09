@@ -4,6 +4,18 @@
   <div class="container mt-5" style="max-width: 800px;">
     <h2 class="text-center mb-4">💘 Your Matches</h2>
 
+    <!-- Sort Button (similar to the filter button in Browse) -->
+    <div class="d-flex justify-content-end mb-3">
+      <button class="btn btn-outline-primary" id="sortBtn" data-bs-toggle="dropdown" aria-expanded="false">
+        🔽 Sort Matches
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="sortBtn">
+        <li><a class="dropdown-item" href="{{ url_for('matches', sort_by='recent') }}">Most Recent</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('matches', sort_by='name') }}">Name (A-Z)</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('matches', sort_by='distance') }}">Distance</a></li>
+      </ul>
+    </div>
+
     {% if matches %}
       <div class="row row-cols-1 row-cols-md-2 g-4">
         {% for match in matches %}
@@ -52,3 +64,4 @@
     </div>
   </div>
 {% endblock %}
+

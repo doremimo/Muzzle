@@ -25,7 +25,8 @@ c.execute("""
         tags TEXT,
         latitude REAL,
         longitude REAL,
-        email_verified INTEGER DEFAULT 0
+        email_verified INTEGER DEFAULT 0,
+        last_login DATETIME  -- Add the new column for tracking last login
     )
 """)
 
@@ -51,7 +52,7 @@ c.execute("""
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         reported_user TEXT NOT NULL,
         reporter TEXT NOT NULL
-        )
+    )
 """)
 
 # Table to store likes
@@ -77,7 +78,6 @@ c.execute("""
         is_deleted_by_recipient INTEGER DEFAULT 0
     )
 """)
-
 
 conn.commit()
 conn.close()
