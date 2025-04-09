@@ -65,6 +65,88 @@ def manual_login():
 
     return render_template("manual_login.html", username=request.form.get("username", ""))
 
+
+# Functions for reset password
+def generate_reset_token(email):
+    serializer = URLSafeTimedSerializer(app.secret_key)
+    return serializer.dumps(email, salt='password-reset')
+
+def confirm_reset_token(token, expiration=3600):
+    serializer = URLSafeTimedSerializer(app.secret_key)
+    try:
+        email = serializer.loads(token, salt='password-reset', max_age=expiration)
+    except:
+        return False
+    return email
+
+def send_reset_email(user_email, reset_url):
+    msg = Message('Reset your password for Muzzle', recipients=[user_email])
+    msg.body = f'''
+Hi there!
+
+We received a request to reset your password for your Muzzle account.
+
+Click the link below to reset your password:
+
+{reset_url}
+
+If you didn't request a password reset, please ignore this email.
+
+Cheers,
+The Muzzle Team
+'''
+    mail.send(msg)
+
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+
+        # Check if the email exists in the database
+        conn = sqlite3.connect('users.db')
+        c = conn.cursor()
+        c.execute("SELECT email FROM users WHERE email = ?", (email,))
+        user = c.fetchone()
+        conn.close()
+
+        if user:
+            # Generate a password reset token (or send email with link)
+            reset_token = generate_reset_token(email)
+            reset_url = url_for('reset_password', token=reset_token, _external=True)
+            send_reset_email(email, reset_url)
+            flash('Password reset email has been sent!', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('Email not found!', 'danger')
+            return redirect(url_for('forgot_password'))
+
+    return render_template('forgot_password.html')
+
+
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    email = confirm_reset_token(token)
+    if email:
+        if request.method == 'POST':
+            new_password = request.form['password']
+            # Update the password in the database
+            conn = sqlite3.connect('users.db')
+            c = conn.cursor()
+            hashed_password = generate_password_hash(new_password)
+            c.execute("UPDATE users SET password = ? WHERE email = ?", (hashed_password, email))
+            conn.commit()
+            conn.close()
+            flash('Your password has been reset!', 'success')
+            return redirect(url_for('login'))
+
+        return render_template('reset_password.html')
+    else:
+        flash('The reset link is invalid or has expired.', 'danger')
+        return redirect(url_for('login'))
+
+
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
 

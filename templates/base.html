@@ -66,6 +66,32 @@
     #mainContentWrapper {
       transition: transform 0.3s ease;
     }
+
+      body {
+  background: linear-gradient(180deg, #d4b7ff, #b48be4, #7e59c8, #5b2d91);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: #f8f9fa;
+}
+
+
+
+/* Make sure main content isn't buried */
+#mainContentWrapper {
+  position: relative;
+  z-index: 1;
+}
+
+/* Navbar stays clean white */
+.navbar {
+  background-color: white !important;
+  color: black;
+  z-index: 2;
+  position: relative;
+}
+
+
   </style>
 </head>
 
