@@ -247,16 +247,6 @@
 
 {% block scripts %}
 <script>
-window.addEventListener("DOMContentLoaded", () => {
-  const usedQuestions = JSON.parse(localStorage.getItem("usedIcebreakers") || "[]");
-
-  document.querySelectorAll(".icebreaker-tag-wrapper").forEach(wrapper => {
-    const question = wrapper.dataset.question;
-    if (usedQuestions.includes(question)) {
-      wrapper.remove(); // hide if already used or closed
-    }
-  });
-});
 
 
 document.getElementById("messageSearch").addEventListener("input", function () {
@@ -356,17 +346,8 @@ document.querySelectorAll(".starter-btn").forEach(btn => {
             chatBox.innerHTML += messageHtml;
             chatBox.scrollTop = chatBox.scrollHeight;
             const wrapper = btn.closest(".icebreaker-tag-wrapper");
-
-            const question = wrapper.dataset.question;
-            let used = JSON.parse(localStorage.getItem("usedIcebreakers") || "[]");
-            if (!used.includes(question)) {
-              used.push(question);
-              localStorage.setItem("usedIcebreakers", JSON.stringify(used));
-            }
-
             wrapper.classList.add("removed");
             setTimeout(() => wrapper.remove(), 300);
-
 
 
         })
@@ -378,17 +359,8 @@ document.querySelectorAll(".icebreaker-close").forEach(closeBtn => {
   closeBtn.addEventListener("click", (e) => {
     e.stopPropagation(); // Don't trigger the main send logic
     const wrapper = closeBtn.closest(".icebreaker-tag-wrapper");
-
-    const question = wrapper.dataset.question;
-    let used = JSON.parse(localStorage.getItem("usedIcebreakers") || "[]");
-    if (!used.includes(question)) {
-      used.push(question);
-      localStorage.setItem("usedIcebreakers", JSON.stringify(used));
-    }
-
     wrapper.classList.add("removed");
     setTimeout(() => wrapper.remove(), 300);
-
   });
 });
 </script>
