@@ -5,6 +5,7 @@
     .message-entry {
         background-color: #ffffff;
         border-radius: 20px;
+        color: #000000 !important;
         padding: 10px;
         margin-bottom: 10px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -59,53 +60,147 @@
     }
 
     #chatMessages {
+        color: #4b0082 !important;
         scroll-behavior: smooth;
     }
 
     .icebreaker-tag {
-        background-color: #f3eaff;
-        color: #4b0082;
-        border: none;
-        border-radius: 20px;
-        padding: 6px 12px;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
+      background-color: #f0efff;
+      color: #4b0082;
+      border: none;
+      border-radius: 9999px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: inline-block;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+      appearance: none;
+      box-shadow: inset 0 0 0 1px rgba(75, 0, 130, 0.15);
     }
 
     .icebreaker-tag:hover {
-        background-color: #e3d3ff;
+      background-color: #e3ddff;
+      transform: translateY(-1px);
     }
+
+    .icebreaker-close {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background-color: white;
+      border: 1px solid #d1c4e9;
+      border-radius: 50%;
+      font-size: 0.6rem;
+      font-weight: bold;
+      width: 16px;
+      height: 16px;
+      line-height: 1;
+      text-align: center;
+      padding: 0;
+      color: #5b2d91;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+.icebreaker-close:hover {
+  background-color: #fce4ec;
+  color: #c2185b;
+}
+
+
+    .icebreaker-tag.removed {
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+
+    .message-entry strong,
+        .message-entry div,
+        .message-entry span,
+        .message-entry {
+          color: black !important;
+        }
+
+    body {
+      color: inherit;
+    }
+
+    .icebreaker-tag-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .icebreaker-close {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 50%;
+      font-size: 0.7rem;
+      line-height: 1;
+      padding: 2px 5px;
+      cursor: pointer;
+      color: #555;
+      transition: background 0.2s ease;
+    }
+
+    .icebreaker-close:hover {
+      background: #f8d7da;
+      color: #a00;
+    }
+
+    .icebreaker-tag {
+  backdrop-filter: blur(3px);
+  background-color: rgba(240, 239, 255, 0.7);
+}
+    .chat-black {
+      color: black !important;
+    }
+
+
+
 </style>
+
+
 {% endblock %}
 
 {% block content %}
 <div class="container mt-5" style="max-width: 600px;">
     <h3 class="mb-4">💬 Chat with {{ other_display_name }} (@{{ other_user }})</h3>
 
-    {% if messages|length == 0 %}
+
     <div class="mb-3">
         <div class="fw-bold mb-2">🐾 Icebreakers:</div>
         <div class="d-flex flex-wrap gap-2">
             {% for q in starter_questions %}
-                <button type="button" class="icebreaker-tag starter-btn">{{ q }}</button>
+                <div class="icebreaker-tag-wrapper position-relative d-inline-block">
+                  <button type="button" class="icebreaker-tag starter-btn">{{ q }}</button>
+                  <button class="icebreaker-close" title="Remove">×</button>
+                </div>
+
             {% endfor %}
         </div>
     </div>
-    {% endif %}
+
 
     <div class="mb-3">
         <input type="text" id="messageSearch" class="form-control" placeholder="Search messages...">
     </div>
 
-    <div class="border rounded p-3 mb-3"
-         style="height: 300px; overflow-y: scroll; background: linear-gradient(to bottom right, #e7d5fa, #ffffff);"
-         id="chatMessages">
+    <div id="chatMessages"
+         class="border rounded p-3 mb-3"
+         style="height: 300px; overflow-y: scroll; background: linear-gradient(to bottom right, #e7d5fa, #ffffff); border-radius: 1rem;">
+        <!-- <div class="message-entry" style="color: black;">TEST MESSAGE</div> -->
+
 
         {% for sender, content, timestamp, is_read, message_id, image_url in messages %}
-            <div class="mb-2 message-entry">
-                <div class="mb-2 d-flex justify-content-between align-items-start">
-                    <div>
+            <div class="mb-2 message-entry {% if sender == session['username'] %}sent{% else %}received{% endif %}" style="color: black;">
+                <div class="mb-2 d-flex justify-content-between align-items-start" style="color: black;">
+                    <div style="color: black;">
+
                         <strong>
                             {% if sender == session['username'] %}
                                 You:
@@ -118,6 +213,7 @@
                             <div><img src="{{ image_url }}" alt="Image" class="img-fluid mt-2" style="max-height: 200px;"></div>
                         {% endif %}
                         <div class="text-muted small">
+
                             {{ timestamp }}
                             {% if sender == session['username'] %}
                                 • <span class="{{ 'text-success' if is_read else 'text-muted' }}">
@@ -172,16 +268,20 @@ document.getElementById("messageForm").addEventListener("submit", function (even
     .then(data => {
         const chatBox = document.getElementById("chatMessages");
         const messageHtml = `
-            <div class="mb-2 message-entry sent">
-                <div class="mb-2 d-flex justify-content-between align-items-start">
-                    <div>
-                        <strong>${data.sender}:</strong>
-                        ${data.content || ""}
-                        ${data.image_url ? `<div><img src="${data.image_url}" alt="Image" class="img-fluid mt-2" style="max-height: 200px;"></div>` : ""}
-                        <div class="text-muted small">Just now</div>
-                    </div>
-                </div>
-            </div>`;
+          <div class="mb-2 message-entry sent" style="color: black;">
+            <div class="mb-2 d-flex justify-content-between align-items-start" style="color: black;">
+              <div style="color: black;">
+                <strong>You:</strong>
+                ${data.content || ""}
+                ${data.image_url ? `<div><img src="${data.image_url}" alt="Image" class="img-fluid mt-2" style="max-height: 200px;"></div>` : ""}
+                <div class="text-muted small" style="color: black;">Just now • Sent</div>
+              </div>
+              <form method="POST" class="delete-form" action="/delete_message/${data.message_id}">
+                <button type="submit" class="btn btn-sm btn-outline-purple ms-2" title="Delete for me">🗑️</button>
+              </form>
+            </div>
+          </div>`;
+
         chatBox.innerHTML += messageHtml;
         document.getElementById("messageInput").value = "";
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -226,13 +326,15 @@ document.querySelectorAll(".starter-btn").forEach(btn => {
         .then(data => {
             const chatBox = document.getElementById("chatMessages");
             const messageHtml = `
-                <div class="mb-2 message-entry sent">
-                    <div class="mb-2 d-flex justify-content-between align-items-start">
-                        <div>
+                 <div class="mb-2 message-entry sent chat-black">
+                    <div class="mb-2 d-flex justify-content-between align-items-start" style="color: black;">
+                      <div style="color: black;">
+
                             <strong>You:</strong>
                             ${data.content || ""}
                             ${data.image_url ? `<div><img src="${data.image_url}" alt="Image" class="img-fluid mt-2" style="max-height: 200px;"></div>` : ""}
-                            <div class="message-meta text-muted small">Just now • Sent</div>
+                            <div class="text-muted small" style="color: black;">Just now • Sent</div>
+
                         </div>
                         <form method="POST" class="delete-form" action="/delete_message/${data.message_id}">
                             <button type="submit" class="btn btn-sm btn-outline-purple ms-2" title="Delete for me">🗑️</button>
@@ -241,10 +343,23 @@ document.querySelectorAll(".starter-btn").forEach(btn => {
                 </div>`;
             chatBox.innerHTML += messageHtml;
             chatBox.scrollTop = chatBox.scrollHeight;
-            btn.remove();
+            const wrapper = btn.closest(".icebreaker-tag-wrapper");
+            wrapper.classList.add("removed");
+            setTimeout(() => wrapper.remove(), 300);
+
+
         })
         .catch(error => console.error("Error sending starter message:", error));
     });
+});
+
+document.querySelectorAll(".icebreaker-close").forEach(closeBtn => {
+  closeBtn.addEventListener("click", (e) => {
+    e.stopPropagation(); // Don't trigger the main send logic
+    const wrapper = closeBtn.closest(".icebreaker-tag-wrapper");
+    wrapper.classList.add("removed");
+    setTimeout(() => wrapper.remove(), 300);
+  });
 });
 </script>
 {% endblock %}
