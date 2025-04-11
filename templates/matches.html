@@ -21,7 +21,7 @@
         {% for match in matches %}
           <div class="col user-card">
             <div class="card h-100 shadow-sm position-relative">
-              <img src="{{ url_for('static', filename=match[6] or 'profilepics/default_profile_pic.png') }}"
+              <img src="{{ url_for('static', filename=match[5] or 'profilepics/default_profile_pic.png') }}"
                    class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
               <div class="card-body">
                 <h5 class="card-title mb-1">{{ match[0] or match[1] }}, {{ match[2] or '?' }}</h5>
