@@ -697,7 +697,11 @@ def browse():
     dealbreaker_tags = request.form.getlist("dealbreaker_tags")
     dealbreaker_tags = [tag.strip().lower() for tag in dealbreaker_tags if tag.strip()]
 
-    # Fetch all other users including their coordinates
+    # Get list of already liked usernames
+    c.execute("SELECT liked FROM likes WHERE liker = ?", (session["username"],))
+    liked_usernames = {row[0] for row in c.fetchall()}
+
+    # Fetch all other users (excluding self and liked)
     c.execute("""
         SELECT display_name, username, age, location, favorite_animal, 
                dog_free_reason, profile_pic, bio, gender, interests, main_tag, tags,
@@ -705,7 +709,10 @@ def browse():
         FROM users
         WHERE username != ?
     """, (session["username"],))
-    all_users = c.fetchall()
+    all_users_raw = c.fetchall()
+
+    # Filter out already liked users
+    all_users = [user for user in all_users_raw if user[1] not in liked_usernames]
 
     # Get current user's coordinates
     c.execute("SELECT latitude, longitude FROM users WHERE username = ?", (session["username"],))
@@ -769,6 +776,46 @@ def browse():
     scored_users.sort(key=lambda x: x[1], reverse=True)
 
     return render_template("browse.html", users=scored_users)
+
+@app.route("/next-user", methods=["POST"])
+def next_user():
+    if "username" not in session:
+        return "", 401
+
+    current_user = session["username"]
+    shown_usernames = request.json.get("shown_usernames", [])
+
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+
+    # Get liked users
+    c.execute("SELECT liked FROM likes WHERE liker = ?", (current_user,))
+    liked_usernames = {row[0] for row in c.fetchall()}
+
+    # Combine with already shown on frontend
+    exclude_usernames = set(shown_usernames) | liked_usernames | {current_user}
+
+    # Fetch next best user
+    placeholders = ",".join("?" for _ in exclude_usernames)
+    query = f"""
+        SELECT display_name, username, age, location, favorite_animal, 
+               dog_free_reason, profile_pic, bio, gender, interests, main_tag, tags,
+               latitude, longitude
+        FROM users
+        WHERE username NOT IN ({placeholders})
+        LIMIT 1
+    """
+    c.execute(query, tuple(exclude_usernames))
+    result = c.fetchone()
+    conn.close()
+
+    if not result:
+        return "", 204  # No more users
+
+    # Render a partial HTML card for this user
+    rendered_card = render_template("partials/user_card.html", user=result, score=0)
+    return rendered_card
+
 
 @app.route("/user/<username>")
 def view_user_profile(username):
@@ -898,8 +945,15 @@ def like(username):
         conn.commit()
         flash(f"You liked @{liked}!")
 
+    # Close DB before returning anything
     conn.close()
+
+    # Return nothing for AJAX
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return "", 204
+
     return redirect(url_for("browse"))
+
 
 @app.route("/unmatch/<username>", methods=["POST"])
 def unmatch(username):

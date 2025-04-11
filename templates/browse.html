@@ -1,108 +1,113 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4 pt-5">
+  <div class="container mt-4 pt-5">
+    <!-- 🔍 Toggle & Filter Form -->
+    <button class="btn btn-outline-primary btn-sm mb-3" id="topFilterToggle">🔍 Filters</button>
 
-  <!-- 🔍 Toggle & Filter Form -->
-  <button class="btn btn-outline-primary btn-sm mb-3" id="topFilterToggle">🔍 Filters</button>
-
-  <form id="topFilterForm" method="POST" class="card p-3 d-none">
-    <!-- Age Sliders -->
-    <div class="mb-3">
-      <label class="form-label">Age Range</label>
-      <div class="d-flex align-items-center gap-3">
-        <span id="minAgeLabel">18</span>
-        <input type="range" class="form-range" id="minAge" name="min_age" min="18" max="99" value="18">
-        <input type="range" class="form-range" id="maxAge" name="max_age" min="18" max="99" value="99">
-        <span id="maxAgeLabel">99</span>
-      </div>
-    </div>
-
-    <!-- Location -->
-    <div class="mb-3">
-      <label class="form-label">Location</label>
-      <input type="text" name="location" class="form-control">
-    </div>
-
-    <!-- Gender -->
-    <div class="mb-3">
-      <label class="form-label">Gender</label>
-      <select name="gender" class="form-select">
-        <option value="">Any</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-        <option value="Nonbinary">Nonbinary</option>
-        <option value="Prefer not to say">Prefer not to say</option>
-      </select>
-    </div>
-
-    <!-- Preferred Tags -->
-    <div class="mb-3">
-      <label class="form-label">Preferred Tags</label>
-      <div id="preferred-tags" class="d-flex flex-wrap gap-2">
-        {% for tag in ["Fully Pet-Free", "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy"] %}
-          <button type="button" class="btn btn-outline-primary btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
-        {% endfor %}
-      </div>
-      <input type="hidden" name="preferred_tags" id="preferredTagsInput">
-    </div>
-
-    <!-- Dealbreaker Tags -->
-    <div class="mb-3">
-      <label class="form-label">Dealbreaker Tags</label>
-      <div id="dealbreaker-tags" class="d-flex flex-wrap gap-2">
-        {% for tag in ["Fully Pet-Free", "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy"] %}
-          <button type="button" class="btn btn-outline-danger btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
-        {% endfor %}
-      </div>
-      <input type="hidden" name="dealbreaker_tags" id="dealbreakerTagsInput">
-    </div>
-
-    <!-- Submit -->
-    <div class="text-end">
-      <button type="submit" class="btn btn-primary">Apply Filters</button>
-    </div>
-  </form>
-
-  <!-- 🧡 Browse Results -->
-  {% if users %}
-    <div class="row row-cols-1 row-cols-md-2 g-4">
-      {% for user, score in users %}
-        <div class="col">
-          <div class="card h-100 shadow-sm">
-            <img src="{{ url_for('static', filename=user[6] or 'profilepics/default_profile_pic.png') }}"
-                 class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
-            <div class="card-body">
-              <h5 class="card-title mb-1">{{ user[0] }}, {{ user[2] or '?' }}</h5>
-              <p class="card-text text-muted mb-2">{{ user[3] or 'No location' }}</p>
-              {% if user[10] %}
-                <span class="badge bg-primary fs-6">{{ user[10] }}</span>
-              {% endif %}
-              {% set tag_list = user[11].split(',') if user[11] else [] %}
-              <div class="mt-2">
-                {% for tag in tag_list[:2] %}
-                  <span class="badge bg-secondary me-1">{{ tag }}</span>
-                {% endfor %}
-              </div>
-              {% if score >= 4 %}
-                <div class="mt-2">
-                  <span class="badge bg-success">💘 High Match</span>
-                </div>
-              {% endif %}
-            </div>
-            <form method="POST" action="{{ url_for('like', username=user[1]) }}" class="card-footer text-end">
-              <button type="submit" class="btn btn-outline-danger btn-sm">💗 Like</button>
-              <a href="{{ url_for('view_user_profile', username=user[1]) }}" class="btn btn-outline-secondary btn-sm">View</a>
-            </form>
-          </div>
+    <form id="topFilterForm" method="POST" class="card p-3 d-none">
+      <!-- Age Sliders -->
+      <div class="mb-3">
+        <label class="form-label">Age Range</label>
+        <div class="d-flex align-items-center gap-3">
+          <span id="minAgeLabel">18</span>
+          <input type="range" class="form-range" id="minAge" name="min_age" min="18" max="99" value="18">
+          <input type="range" class="form-range" id="maxAge" name="max_age" min="18" max="99" value="99">
+          <span id="maxAgeLabel">99</span>
         </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="alert alert-info text-center mt-4">No users match your filters. Try again!</div>
-  {% endif %}
+      </div>
 
-</div>
+      <!-- Location -->
+      <div class="mb-3">
+        <label class="form-label">Location</label>
+        <input type="text" name="location" class="form-control">
+      </div>
+
+      <!-- Gender -->
+      <div class="mb-3">
+        <label class="form-label">Gender</label>
+        <select name="gender" class="form-select">
+          <option value="">Any</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Nonbinary">Nonbinary</option>
+          <option value="Prefer not to say">Prefer not to say</option>
+        </select>
+      </div>
+
+      <!-- Preferred Tags -->
+      <div class="mb-3">
+        <label class="form-label">Preferred Tags</label>
+        <div id="preferred-tags" class="d-flex flex-wrap gap-2">
+          {% for tag in ["Fully Pet-Free", "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy"] %}
+            <button type="button" class="btn btn-outline-primary btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="preferred_tags" id="preferredTagsInput">
+      </div>
+
+      <!-- Dealbreaker Tags -->
+      <div class="mb-3">
+        <label class="form-label">Dealbreaker Tags</label>
+        <div id="dealbreaker-tags" class="d-flex flex-wrap gap-2">
+          {% for tag in ["Fully Pet-Free", "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy"] %}
+            <button type="button" class="btn btn-outline-danger btn-sm tag-chip" data-tag="{{ tag }}">{{ tag }}</button>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="dealbreaker_tags" id="dealbreakerTagsInput">
+      </div>
+
+      <!-- Submit -->
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+      </div>
+    </form>
+
+    <!-- 🧡 Browse Results -->
+    {% if users %}
+      <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for user, score in users %}
+          <div class="col">
+            <div class="card h-100 shadow-sm" id="user-card-{{ user[1] }}">
+
+              <img src="{{ url_for('static', filename=user[6] or 'profilepics/default_profile_pic.png') }}" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
+              <div class="card-body">
+                <h5 class="card-title mb-1">{{ user[0] }}, {{ user[2] or '?' }}</h5>
+                <p class="card-text text-muted mb-2">{{ user[3] or 'No location' }}</p>
+                {% set tag_list = user[11].split(',') if user[11] else [] %}
+                {% if tag_list %}
+                  <div class="mb-2">
+                    <span class="badge fs-6 bg-primary">{{ tag_list[0] }}</span>
+                  </div>
+                {% endif %}
+                <div class="mt-2">
+                  {% for tag in tag_list[1:3] %}
+                    <span class="badge bg-secondary me-1">{{ tag }}</span>
+                  {% endfor %}
+                </div>
+                {% if score >= 4 %}
+                  <div class="mt-2">
+                    <span class="badge bg-success">💘 High Match</span>
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="card-footer text-end">
+                <form action="{{ url_for('like', username=user[1]) }}" method="POST" class="like-form d-inline">
+                  <button type="submit" class="btn btn-sm btn-outline-secondary like-btn" data-username="{{ user[1] }}">
+                    🦝
+                  </button>
+                </form>
+                <a href="{{ url_for('view_user_profile', username=user[1]) }}" class="btn btn-outline-secondary btn-sm">View</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info text-center mt-4">No users match your filters. Try again!</div>
+    {% endif %}
+  </div>
 {% endblock %}
 
 {% block scripts %}
@@ -152,6 +157,61 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupChips("preferred-tags", "preferredTagsInput");
   setupChips("dealbreaker-tags", "dealbreakerTagsInput");
+
+  // 🦝 AJAX Like Button with Smooth Removal + Replacement
+  document.querySelectorAll(".like-form").forEach(form => {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const button = form.querySelector(".like-btn");
+      const username = button.dataset.username;
+      const card = document.getElementById("user-card-" + username);
+      const col = card.closest(".col");
+
+      // ❤️ Animate raccoon
+      button.classList.add("liked");
+      button.innerText = "❤️";
+
+      fetch(form.action, {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      }).then(() => {
+        setTimeout(() => {
+          col.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+          col.style.opacity = "0";
+          col.style.transform = "translateY(10px)";
+
+          setTimeout(() => {
+            col.remove();
+
+            // 🔄 Fetch and insert a new user card
+            const shownUsernames = Array.from(document.querySelectorAll(".like-btn"))
+              .map(btn => btn.dataset.username)
+              .filter(Boolean);
+
+            fetch("/next-user", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ shown_usernames: shownUsernames })
+            })
+            .then(response => response.text())
+            .then(html => {
+              if (html.trim()) {
+                const temp = document.createElement("div");
+                temp.innerHTML = html;
+                const newCard = temp.firstElementChild;
+
+                newCard.classList.add("fade-in"); // 👈 animation
+
+                document.querySelector(".row.row-cols-1.row-cols-md-2").appendChild(newCard);
+              }
+            });
+          }, 500);
+        }, 300);
+      });
+    });
+  });
 });
 </script>
 {% endblock %}
