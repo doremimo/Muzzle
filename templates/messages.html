@@ -31,6 +31,7 @@
         bottom: 5px;
         right: 10px;
     }
+    }
 
     .status-badge {
         font-size: 0.75rem;
@@ -88,25 +89,27 @@
       position: absolute;
       top: -6px;
       right: -6px;
-      background-color: white;
-      border: 1px solid #d1c4e9;
-      border-radius: 50%;
-      font-size: 0.6rem;
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
       font-weight: bold;
-      width: 16px;
-      height: 16px;
       line-height: 1;
-      text-align: center;
-      padding: 0;
+      border: 1px solid #5b2d91;
+      border-radius: 50%;
       color: #5b2d91;
+      background-color: white;
       cursor: pointer;
       transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-.icebreaker-close:hover {
-  background-color: #fce4ec;
-  color: #c2185b;
-}
+    .icebreaker-close:hover {
+      background-color: #f0e6ff;
+      color: #4b0082;
+    }
+
 
 
     .icebreaker-tag.removed {
@@ -130,26 +133,6 @@
     .icebreaker-tag-wrapper {
       position: relative;
       display: inline-block;
-    }
-
-    .icebreaker-close {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 50%;
-      font-size: 0.7rem;
-      line-height: 1;
-      padding: 2px 5px;
-      cursor: pointer;
-      color: #555;
-      transition: background 0.2s ease;
-    }
-
-    .icebreaker-close:hover {
-      background: #f8d7da;
-      color: #a00;
     }
 
     .icebreaker-tag {
@@ -178,7 +161,7 @@
             {% for q in starter_questions %}
               <div class="icebreaker-tag-wrapper" data-question="{{ q }}">
                 <span class="icebreaker-tag starter-btn">{{ q }}</span>
-                <button class="icebreaker-close" title="Remove">×</button>
+                <span class="icebreaker-close" title="Remove">×</span>
               </div>
             {% endfor %}
 
@@ -247,6 +230,16 @@
 
 {% block scripts %}
 <script>
+const chatPartner = "{{ other_user }}"; // unique per thread
+const storageKey = `usedIcebreakers_${chatPartner}`;
+const usedQuestions = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+document.querySelectorAll(".icebreaker-tag-wrapper").forEach(wrapper => {
+  const question = wrapper.dataset.question;
+  if (usedQuestions.includes(question)) {
+    wrapper.remove(); // Hide previously used ones
+  }
+});
 
 
 document.getElementById("messageSearch").addEventListener("input", function () {
@@ -307,12 +300,16 @@ document.querySelectorAll(".delete-form").forEach(form => {
     });
 });
 
-window.addEventListener("load", function () {
-    setTimeout(() => {
-        const chatBox = document.getElementById("chatMessages");
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }, 100);
+window.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    const chatBox = document.getElementById("chatMessages");
+    // Defer scroll to allow DOM animations and removals to finish
+    requestAnimationFrame(() => {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+  }, 350); // Delay matches the icebreaker removal animation (300ms + buffer)
 });
+
 
 document.querySelectorAll(".starter-btn").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -347,7 +344,14 @@ document.querySelectorAll(".starter-btn").forEach(btn => {
             chatBox.scrollTop = chatBox.scrollHeight;
             const wrapper = btn.closest(".icebreaker-tag-wrapper");
             wrapper.classList.add("removed");
-            setTimeout(() => wrapper.remove(), 300);
+            setTimeout(() => {
+              wrapper.remove();
+
+              // 🔒 Save this question as used (chat-specific)
+              usedQuestions.push(message);
+              localStorage.setItem(storageKey, JSON.stringify(usedQuestions));
+            }, 300);
+
 
 
         })
@@ -357,11 +361,19 @@ document.querySelectorAll(".starter-btn").forEach(btn => {
 
 document.querySelectorAll(".icebreaker-close").forEach(closeBtn => {
   closeBtn.addEventListener("click", (e) => {
-    e.stopPropagation(); // Don't trigger the main send logic
+    e.stopPropagation(); // Don't trigger the send logic
     const wrapper = closeBtn.closest(".icebreaker-tag-wrapper");
+    const question = wrapper.dataset.question;
+
+    // Animate + remove
     wrapper.classList.add("removed");
     setTimeout(() => wrapper.remove(), 300);
+
+    // Save to localStorage as used
+    usedQuestions.push(question.trim());
+    localStorage.setItem(storageKey, JSON.stringify(usedQuestions));
   });
 });
+
 </script>
 {% endblock %}
