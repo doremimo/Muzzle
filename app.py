@@ -902,7 +902,7 @@ def matches():
     if sort_by == "name":
         match_list.sort(key=lambda x: x[0].lower())  # Sort by name
     elif sort_by == "recent":
-        match_list.sort(key=lambda x: x[7], reverse=True)  # Sort by last login date (assuming last_login is stored)
+        match_list.sort(key=lambda x: x[7] or datetime.min, reverse=True)
     elif sort_by == "distance":
         # Assuming you have latitude/longitude for each user
         c.execute("SELECT latitude, longitude FROM users WHERE username = ?", (current_user,))
