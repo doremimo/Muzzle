@@ -702,6 +702,14 @@ def browse():
     liked_usernames = {row[0] for row in c.fetchall()}
 
     # Fetch all other users (excluding self and liked)
+    # Get blocked and blocking users
+    c.execute("SELECT blocked FROM blocks WHERE blocker = ?", (session["username"],))
+    you_blocked = {row[0] for row in c.fetchall()}
+
+    c.execute("SELECT blocker FROM blocks WHERE blocked = ?", (session["username"],))
+    blocked_you = {row[0] for row in c.fetchall()}
+
+    # Fetch all other users (excluding self, liked, and blocked)
     c.execute("""
         SELECT display_name, username, age, location, favorite_animal, 
                dog_free_reason, profile_pic, bio, gender, interests, main_tag, tags,
@@ -710,6 +718,14 @@ def browse():
         WHERE username != ?
     """, (session["username"],))
     all_users_raw = c.fetchall()
+
+    # Filter out liked and blocked users
+    all_users = [
+        user for user in all_users_raw
+        if user[1] not in liked_usernames
+           and user[1] not in you_blocked
+           and user[1] not in blocked_you
+    ]
 
     # Filter out already liked users
     all_users = [user for user in all_users_raw if user[1] not in liked_usernames]
@@ -886,6 +902,16 @@ def matches():
     # Find mutual matches
     mutual_matches = set(liked_users).intersection(liked_by_users)
 
+    # 🧱 Exclude blocked users (either blocked by or blocked the current user)
+    c.execute("""
+        SELECT blocked_user FROM blocks WHERE blocker = ?
+        UNION
+        SELECT blocker FROM blocks WHERE blocked_user = ?
+    """, (current_user, current_user))
+    blocked_usernames = {row[0] for row in c.fetchall()}
+
+    mutual_matches = mutual_matches - blocked_usernames
+
     # Fetch details for those matched users
     if mutual_matches:
         placeholders = ",".join("?" * len(mutual_matches))
@@ -909,20 +935,20 @@ def matches():
         current_coords = c.fetchone()
         current_lat, current_lon = current_coords if current_coords else (None, None)
 
-        # Sort by distance using the haversine formula
         def haversine(lat1, lon1, lat2, lon2):
             from math import radians, cos, sin, sqrt, asin
-            R = 6371  # Radius of Earth in km
+            R = 6371
             dlat = radians(lat2 - lat1)
             dlon = radians(lon2 - lon1)
             a = sin(dlat / 2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2)**2
             return R * 2 * asin(sqrt(a))
 
-        match_list.sort(key=lambda x: haversine(current_lat, current_lon, x[8], x[9]))  # Sort by distance (lat/lon in 8th and 9th positions)
+        match_list.sort(key=lambda x: haversine(current_lat, current_lon, x[8], x[9]))
 
     conn.close()
 
     return render_template("matches.html", matches=match_list)
+
 
 
 
@@ -1148,6 +1174,32 @@ def report(username):
     flash(f"You reported @{username} for: {reason}")
     return redirect(url_for("browse"))
 
+@app.route("/block/<username>", methods=["POST"])
+def block_user(username):
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    blocker = session["username"]
+
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+
+    # Create block table if it doesn't exist
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS blocks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            blocker TEXT NOT NULL,
+            blocked TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Insert block entry
+    c.execute("INSERT INTO blocks (blocker, blocked) VALUES (?, ?)", (blocker, username))
+    conn.commit()
+    conn.close()
+
+    return "", 204  # No content needed for fetch success
 
 
 @app.route("/logout")

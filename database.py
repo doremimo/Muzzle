@@ -58,6 +58,16 @@ c.execute("""
     )
 """)
 
+c.execute("""
+    CREATE TABLE IF NOT EXISTS blocks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        blocker TEXT NOT NULL,
+        blocked TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+""")
+
+
 # Table to store likes
 c.execute("""
     CREATE TABLE IF NOT EXISTS likes (
