@@ -219,6 +219,9 @@ def signup():
 
     return render_template("signup.html", username=request.form.get("username", ""))
 
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -1045,6 +1048,18 @@ def message_thread(username):
     current_user = session["username"]
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
+
+    # 🚫 Block check
+    c.execute("""
+        SELECT 1 FROM blocks
+        WHERE (blocker = ? AND blocked = ?) OR (blocker = ? AND blocked = ?)
+    """, (current_user, username, username, current_user))
+    blocked = c.fetchone()
+
+    if blocked:
+        conn.close()
+        flash("You cannot message this user.")
+        return redirect(url_for("browse"))
 
     # Handle new message being sent
     if request.method == "POST":
