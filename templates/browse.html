@@ -122,6 +122,42 @@
   </div>
 {% endblock %}
 
+<!-- Report Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" id="reportForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="reportModalLabel">Report User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="reported_user" id="reportedUserInput">
+          <div class="mb-3">
+            <label for="reasonSelect" class="form-label">Reason</label>
+            <select class="form-select" id="reasonSelect" name="reason" required>
+              <option value="" disabled selected>Select a reason</option>
+              <option value="Inappropriate messages">Inappropriate messages</option>
+              <option value="Fake profile">Fake profile</option>
+              <option value="Pet presence despite profile">Pet presence despite profile</option>
+              <option value="Harassment">Harassment</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="commentsTextarea" class="form-label">Additional Comments (optional)</label>
+            <textarea class="form-control" id="commentsTextarea" name="comments" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Submit Report</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", () => {

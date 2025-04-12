@@ -51,7 +51,10 @@ c.execute("""
     CREATE TABLE IF NOT EXISTS reports (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         reported_user TEXT NOT NULL,
-        reporter TEXT NOT NULL
+        reporter TEXT NOT NULL,
+        reason TEXT,
+        comments TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )
 """)
 

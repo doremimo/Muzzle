@@ -1133,15 +1133,21 @@ def report(username):
         return redirect(url_for("login"))
 
     reporter = session["username"]
+    reason = request.form.get("reason")
+    comments = request.form.get("comments")
 
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
-    c.execute("INSERT INTO reports (reported_user, reporter) VALUES (?, ?)", (username, reporter))
+    c.execute("""
+        INSERT INTO reports (reported_user, reporter, reason, comments)
+        VALUES (?, ?, ?, ?)
+    """, (username, reporter, reason, comments))
     conn.commit()
     conn.close()
 
-    flash(f"You reported @{username}.")
+    flash(f"You reported @{username} for: {reason}")
     return redirect(url_for("browse"))
+
 
 
 @app.route("/logout")
