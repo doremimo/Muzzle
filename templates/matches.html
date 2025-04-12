@@ -21,6 +21,18 @@
         {% for match in matches %}
           <div class="col user-card" id="match-card-{{ match[1] }}">
             <div class="card h-100 shadow-sm position-relative">
+
+                            <!-- ⋯ Dropdown Menu -->
+              <div class="dropdown position-absolute top-0 end-0 m-2">
+                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More options">
+                  ⋯
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><button class="dropdown-item text-danger report-btn" data-username="{{ match[1] }}">🚨 Report</button></li>
+                  <li><button class="dropdown-item text-muted block-btn" data-username="{{ match[1] }}">🚫 Block</button></li>
+                </ul>
+              </div>
+
               <img src="{{ url_for('static', filename=match[5] or 'profilepics/default_profile_pic.png') }}"
                    class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
               <div class="card-body">
@@ -82,5 +94,31 @@ document.querySelectorAll('.unmatch-form').forEach(form => {
     });
   });
 });
+  document.querySelectorAll(".report-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const username = btn.dataset.username;
+    if (confirm(`Report ${username}?`)) {
+      fetch(`/report/${username}`, { method: "POST" })
+        .then(() => alert("User reported."))
+        .catch(err => alert("Error reporting user."));
+    }
+  });
+});
+
+document.querySelectorAll(".block-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const username = btn.dataset.username;
+    if (confirm(`Block ${username}? This action is permanent.`)) {
+      fetch(`/block/${username}`, { method: "POST" })
+        .then(() => {
+          // Optional: remove user card from UI
+          const card = btn.closest(".col");
+          card?.remove();
+        })
+        .catch(err => alert("Error blocking user."));
+    }
+  });
+});
+
 </script>
 {% endblock %}
