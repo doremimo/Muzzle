@@ -292,9 +292,25 @@ def google_callback():
     flash("Logged in with Google!", "success")
 
     if session.pop("needs_profile_completion", False):
-        return redirect(url_for("settings"))
+        return redirect(url_for("google_terms"))
 
     return redirect(url_for("profile"))
+
+@app.route("/google-terms", methods=["GET", "POST"])
+def google_terms():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        if not request.form.get("agree_terms") or not request.form.get("dog_free"):
+            flash("You must agree to both to continue.", "danger")
+            return redirect(url_for("google_terms"))
+
+        session["agreed_google_terms"] = True
+        return redirect(url_for("complete_profile"))
+
+    return render_template("google_terms.html")
+
 
 
 def update_last_login(username):
@@ -561,6 +577,10 @@ def complete_profile():
     c = conn.cursor()
 
     if request.method == "POST":
+        if not request.form.get("agree_terms"):
+            flash("You must agree to the Terms of Use to continue.", "danger")
+            return redirect(url_for("complete_profile"))
+
         new_username = request.form.get("new_username", "").strip()
         display_name = request.form.get("display_name", "").strip()
         age = request.form.get("age")
@@ -576,6 +596,7 @@ def complete_profile():
         sexuality = request.form.get("sexuality", "")
         show_gender = 1 if request.form.get("show_gender") == "on" else 0
         show_sexuality = 1 if request.form.get("show_sexuality") == "on" else 0
+
 
         # Check username uniqueness
         c.execute("SELECT 1 FROM users WHERE username = ? AND username != ?", (new_username, username))
