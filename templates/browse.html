@@ -66,7 +66,7 @@
     <!-- 🧡 Browse Results -->
     {% if users %}
       <div class="row row-cols-1 row-cols-md-2 g-4">
-        {% for user, score in users %}
+        {% for user, score, age in users %}
           <div class="col">
             <div class="card h-100 shadow-sm" id="user-card-{{ user[1] }}">
 
@@ -83,8 +83,8 @@
 
 
               <img src="{{ url_for('static', filename=user[6] or 'profilepics/default_profile_pic.png') }}" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
-              <div class="card-body">
-                <h5 class="card-title mb-1">{{ user[0] }}, {{ user[2] or '?' }}</h5>
+             <div class="card-body">
+                <h5 class="card-title mb-1">{{ user[0] }}, {{ age }}</h5>
                 <p class="card-text text-muted mb-2">{{ user[3] or 'No location' }}</p>
                 {% set tag_list = user[11].split(',') if user[11] else [] %}
                 {% if tag_list %}

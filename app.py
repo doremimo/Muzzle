@@ -846,10 +846,14 @@ def browse():
         return score
 
     # Pair users with their score and sort by best match
-    scored_users = [
-        (user, score) for user in all_users
-        if (score := score_user(user)) >= 0
-    ]
+    scored_users = []
+    for user in all_users:
+        score = score_user(user)
+        if score >= 0:
+            birthday = user[2]
+            age = calculate_age(birthday) if birthday else "?"
+            scored_users.append((user, score, age))
+
     scored_users.sort(key=lambda x: x[1], reverse=True)
 
     return render_template("browse.html", users=scored_users)
