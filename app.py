@@ -922,9 +922,10 @@ def view_user_profile(username):
         flash("User not found.", "danger")
         return redirect(url_for("browse"))
 
-    (display_name, age, location, favorite_animal, dog_free_reason,
+    (display_name, birthday, location, favorite_animal, dog_free_reason,
      profile_pic, bio, gender, interests, main_tag, tags_string,
      g1, g2, g3, g4, g5) = result or (None,) * 16
+    age = calculate_age(birthday) if birthday else "?"
 
     gallery_images = [g for g in [g1, g2, g3, g4, g5] if g]
     tags = tags_string.split(",") if tags_string else []

@@ -28,8 +28,9 @@
                 <h2 class="card-title text-center mb-4">{{ display_name or username }}</h2>
 
                 <div class="text-center mb-3">
-                    <img src="{{ url_for('static', filename='profilepics/' + (profile_pic or 'default_profile_pic.png')) }}"
-                         alt="Profile Picture" class="img-thumbnail" style="max-width: 150px;">
+                    <img src="{{ url_for('static', filename=profile_pic or 'profilepics/default_profile_pic.png') }}"
+                        alt="Profile Picture" class="img-thumbnail rounded" style="max-width: 150px; height: auto;">
+
 
                 </div>
 
