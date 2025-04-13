@@ -11,7 +11,7 @@ c.execute("""
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         display_name TEXT,
-        age INTEGER,
+        birthday TEXT,
         location TEXT,
         favorite_animal TEXT,
         dog_free_reason TEXT,

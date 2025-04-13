@@ -68,6 +68,11 @@ def manual_login():
     return render_template("manual_login.html", username=request.form.get("username", ""))
 
 
+def calculate_age(birthday_str):
+    birthday = datetime.strptime(birthday_str, "%Y-%m-%d")
+    today = datetime.today()
+    return today.year - birthday.year - ((today.month, today.day) < (birthday.month, birthday.day))
+
 # Functions for reset password
 def generate_reset_token(email):
     serializer = URLSafeTimedSerializer(app.secret_key)
@@ -528,7 +533,7 @@ def settings():
     if request.method == "POST":
         # === Text fields ===
         display_name = request.form.get("display_name", "")
-        age = request.form.get("age", None)
+        birthday = request.form.get("birthday")
         location = request.form.get("location", "")
         favorite_animal = request.form.get("favorite_animal", "")
         dog_free_reason = request.form.get("dog_free_reason", "")
@@ -550,18 +555,20 @@ def settings():
         }
         if not any(tag in pet_tags for tag in [main_tag] + tags):
             flash("You must select at least one pet-related tag.", "danger")
+            conn.close()
             return redirect(url_for("settings"))
 
         # === Update profile info ===
         c.execute("""
             UPDATE users SET
-                display_name = ?, age = ?, location = ?, favorite_animal = ?,
+                display_name = ?, birthday = ?, location = ?, favorite_animal = ?,
                 dog_free_reason = ?, bio = ?, gender = ?, sexuality = ?, show_gender = ?, 
-                show_sexuality = ? interests = ?, main_tag = ?, tags = ?
+                show_sexuality = ?, interests = ?, main_tag = ?, tags = ?
             WHERE username = ?
         """, (
-            display_name, age, location, favorite_animal, dog_free_reason,
-            bio, gender, interests, main_tag, tags_string, username
+            display_name, birthday, location, favorite_animal, dog_free_reason,
+            bio, gender, sexuality, show_gender, show_sexuality,
+            interests, main_tag, tags_string, username
         ))
 
         # === Handle gallery image uploads ===
@@ -581,7 +588,7 @@ def settings():
 
     # === GET request: load current data ===
     c.execute("""
-        SELECT display_name, age, location, favorite_animal, dog_free_reason,
+        SELECT display_name, birthday, location, favorite_animal, dog_free_reason,
                bio, gender, interests, main_tag, tags
         FROM users WHERE username = ?
     """, (username,))
@@ -589,6 +596,7 @@ def settings():
     conn.close()
 
     return render_template("settings.html", data=data)
+
 
 @app.route("/complete-profile", methods=["GET", "POST"])
 def complete_profile():
@@ -607,7 +615,7 @@ def complete_profile():
 
         new_username = request.form.get("new_username", "").strip()
         display_name = request.form.get("display_name", "").strip()
-        age = request.form.get("age")
+        birthday = request.form.get("birthday")  # ✅ new birthday field
         location = request.form.get("location", "")
         favorite_animal = request.form.get("favorite_animal", "")
         dog_free_reason = request.form.get("dog_free_reason", "")
@@ -621,8 +629,7 @@ def complete_profile():
         show_gender = 1 if request.form.get("show_gender") == "on" else 0
         show_sexuality = 1 if request.form.get("show_sexuality") == "on" else 0
 
-
-        # Check username uniqueness
+        # Username check
         c.execute("SELECT 1 FROM users WHERE username = ? AND username != ?", (new_username, username))
         if c.fetchone():
             flash("Username already taken.", "danger")
@@ -641,13 +648,15 @@ def complete_profile():
         # Update user profile
         c.execute("""
             UPDATE users SET
-                username = ?, display_name = ?, age = ?, location = ?,
+                username = ?, display_name = ?, birthday = ?, location = ?,
                 favorite_animal = ?, dog_free_reason = ?, bio = ?, gender = ?,
+                sexuality = ?, show_gender = ?, show_sexuality = ?,
                 interests = ?, main_tag = ?, tags = ?
             WHERE username = ?
         """, (
-            new_username, display_name, age, location, favorite_animal,
-            dog_free_reason, bio, gender, interests, main_tag, tags_string, username
+            new_username, display_name, birthday, location, favorite_animal,
+            dog_free_reason, bio, gender, sexuality, show_gender, show_sexuality,
+            interests, main_tag, tags_string, username
         ))
 
         conn.commit()
@@ -665,6 +674,7 @@ def complete_profile():
     conn.close()
 
     return render_template("complete_profile.html", display_name=display_name, username=username)
+
 
 
 @app.route("/delete_gallery_image/<int:index>", methods=["POST"])
