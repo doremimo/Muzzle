@@ -746,29 +746,30 @@ def browse():
     # Get filter inputs
     min_age = request.form.get("min_age")
     max_age = request.form.get("max_age")
-    location_input = request.form.get("location", "").strip().lower()
     gender_input = request.form.get("gender", "").strip().lower()
 
-    # Get preferred and dealbreaker tags from input
     preferred_tags = request.form.getlist("preferred_tags")
     preferred_tags = [tag.strip().lower() for tag in preferred_tags if tag.strip()]
 
     dealbreaker_tags = request.form.getlist("dealbreaker_tags")
     dealbreaker_tags = [tag.strip().lower() for tag in dealbreaker_tags if tag.strip()]
 
-    # Get list of already liked usernames
+    # New: location filter from form
+    target_lat = request.form.get("target_latitude")
+    target_lon = request.form.get("target_longitude")
+    radius_km = request.form.get("radius_km")
+
+    # Get liked and blocked users
     c.execute("SELECT liked FROM likes WHERE liker = ?", (session["username"],))
     liked_usernames = {row[0] for row in c.fetchall()}
 
-    # Fetch all other users (excluding self and liked)
-    # Get blocked and blocking users
     c.execute("SELECT blocked FROM blocks WHERE blocker = ?", (session["username"],))
     you_blocked = {row[0] for row in c.fetchall()}
 
     c.execute("SELECT blocker FROM blocks WHERE blocked = ?", (session["username"],))
     blocked_you = {row[0] for row in c.fetchall()}
 
-    # Fetch all other users (excluding self, liked, and blocked)
+    # Fetch all other users
     c.execute("""
         SELECT display_name, username, birthday, location, favorite_animal, 
                dog_free_reason, profile_pic, bio, gender, interests, main_tag, tags,
@@ -786,31 +787,29 @@ def browse():
            and user[1] not in blocked_you
     ]
 
-    # Filter out already liked users
-    all_users = [user for user in all_users_raw if user[1] not in liked_usernames]
-
-    # Get current user's coordinates
-    c.execute("SELECT latitude, longitude FROM users WHERE username = ?", (session["username"],))
-    current_coords = c.fetchone()
-    user_lat, user_lon = current_coords if current_coords else (None, None)
-
-    conn.close()
-
-    # Score each user
+    # Distance calculator
     from math import radians, cos, sin, asin, sqrt
-
     def haversine(lat1, lon1, lat2, lon2):
-        # Calculate great-circle distance (in km)
-        R = 6371
-        d_lat = radians(lat2 - lat1)
-        d_lon = radians(lon2 - lon1)
-        a = sin(d_lat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2) ** 2
+        R = 6371  # Earth radius in km
+        dlat = radians(lat2 - lat1)
+        dlon = radians(lon2 - lon1)
+        a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
         return R * 2 * asin(sqrt(a))
+
+    def calculate_age(birthday_str):
+        from datetime import datetime
+        try:
+            birthday = datetime.strptime(birthday_str, "%Y-%m-%d")
+            today = datetime.today()
+            return today.year - birthday.year - ((today.month, today.day) < (birthday.month, birthday.day))
+        except:
+            return None
 
     def score_user(user):
         score = 0
         (display_name, username, birthday, loc, _, _, _, _, gender, _, _, tags_str,
          lat, lon) = user
+
         user_age = calculate_age(birthday)
 
         if min_age and user_age and user_age >= int(min_age):
@@ -818,8 +817,6 @@ def browse():
         if max_age and user_age and user_age <= int(max_age):
             score += 1
 
-        if location_input and loc and location_input in loc.lower():
-            score += 1
         if gender_input and gender and gender_input == gender.lower():
             score += 1
 
@@ -832,10 +829,12 @@ def browse():
             if tag in user_tags:
                 score += 1
 
-        # 🌍 Boost score based on distance
-        if user_lat and user_lon and lat and lon:
+        # 🌍 Location filter + proximity boost
+        if radius_km and target_lat and target_lon and lat and lon:
             try:
-                dist = haversine(float(user_lat), float(user_lon), float(lat), float(lon))
+                dist = haversine(float(target_lat), float(target_lon), float(lat), float(lon))
+                if dist > float(radius_km):
+                    return -1  # too far, exclude
                 if dist < 20:
                     score += 2
                 elif dist < 50:
@@ -845,7 +844,7 @@ def browse():
 
         return score
 
-    # Pair users with their score and sort by best match
+    # Build final list
     scored_users = []
     for user in all_users:
         score = score_user(user)
@@ -855,8 +854,10 @@ def browse():
             scored_users.append((user, score, age))
 
     scored_users.sort(key=lambda x: x[1], reverse=True)
-
+    conn.close()
     return render_template("browse.html", users=scored_users)
+
+
 
 @app.route("/next-user", methods=["POST"])
 def next_user():

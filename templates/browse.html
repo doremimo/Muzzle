@@ -17,10 +17,26 @@
         </div>
       </div>
 
-      <!-- Location -->
+      <!-- Location Proximity -->
       <div class="mb-3">
-        <label class="form-label">Location</label>
-        <input type="text" name="location" class="form-control">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="useLocation" name="use_location">
+          <label class="form-check-label" for="useLocation">
+            Use my location to prioritize nearby matches
+          </label>
+        </div>
+        <div class="mt-2">
+          <label class="form-label">Distance Radius (km)</label>
+          <select name="radius_km" class="form-select">
+            <option value="">Any distance</option>
+            <option value="10">Within 10 km</option>
+            <option value="30">Within 30 km</option>
+            <option value="50">Within 50 km</option>
+            <option value="100">Within 100 km</option>
+          </select>
+        </div>
+        <input type="hidden" id="latInput" name="target_latitude">
+        <input type="hidden" id="lonInput" name="target_longitude">
       </div>
 
       <!-- Gender -->
@@ -69,8 +85,7 @@
         {% for user, score, age in users %}
           <div class="col">
             <div class="card h-100 shadow-sm" id="user-card-{{ user[1] }}">
-
-                            <!-- ⋯ Dropdown Menu -->
+              <!-- ⋯ Dropdown Menu -->
               <div class="dropdown position-absolute top-0 end-0 m-2">
                 <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More options">
                   ⋯
@@ -80,10 +95,8 @@
                   <li><button class="dropdown-item text-muted block-btn" data-username="{{ user[1] }}">🚫 Block</button></li>
                 </ul>
               </div>
-
-
               <img src="{{ url_for('static', filename=user[6] or 'profilepics/default_profile_pic.png') }}" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Profile Picture">
-             <div class="card-body">
+              <div class="card-body">
                 <h5 class="card-title mb-1">{{ user[0] }}, {{ age }}</h5>
                 <p class="card-text text-muted mb-2">{{ user[3] or 'No location' }}</p>
                 {% set tag_list = user[11].split(',') if user[11] else [] %}
@@ -103,7 +116,6 @@
                   </div>
                 {% endif %}
               </div>
-
               <div class="card-footer text-end">
                 <form action="{{ url_for('like', username=user[1]) }}" method="POST" class="like-form d-inline">
                   <button type="submit" class="btn btn-sm btn-outline-secondary like-btn" data-username="{{ user[1] }}">
@@ -122,50 +134,23 @@
   </div>
 {% endblock %}
 
-<!-- Report Modal -->
-<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form method="POST" id="reportForm">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="reportModalLabel">Report User</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" name="reported_user" id="reportedUserInput">
-          <div class="mb-3">
-            <label for="reasonSelect" class="form-label">Reason</label>
-            <select class="form-select" id="reasonSelect" name="reason" required>
-              <option value="" disabled selected>Select a reason</option>
-              <option value="Inappropriate messages">Inappropriate messages</option>
-              <option value="Fake profile">Fake profile</option>
-              <option value="Pet presence despite profile">Pet presence despite profile</option>
-              <option value="Harassment">Harassment</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="commentsTextarea" class="form-label">Additional Comments (optional)</label>
-            <textarea class="form-control" id="commentsTextarea" name="comments" rows="3"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-danger">Submit Report</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
-
-
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const toggleBtn = document.getElementById("topFilterToggle");
   const filterForm = document.getElementById("topFilterForm");
-
   toggleBtn.addEventListener("click", () => {
     filterForm.classList.toggle("d-none");
+  });
+
+  // Geolocation tracking
+  document.getElementById("useLocation").addEventListener("change", function () {
+    if (this.checked && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (position) {
+        document.getElementById("latInput").value = position.coords.latitude;
+        document.getElementById("lonInput").value = position.coords.longitude;
+      });
+    }
   });
 
   // Age slider sync
@@ -173,7 +158,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const maxSlider = document.getElementById("maxAge");
   const minLabel = document.getElementById("minAgeLabel");
   const maxLabel = document.getElementById("maxAgeLabel");
-
   function syncAge() {
     let min = parseInt(minSlider.value);
     let max = parseInt(maxSlider.value);
@@ -181,17 +165,15 @@ document.addEventListener("DOMContentLoaded", () => {
     minLabel.textContent = minSlider.value;
     maxLabel.textContent = maxSlider.value;
   }
-
   minSlider.addEventListener("input", syncAge);
   maxSlider.addEventListener("input", syncAge);
   syncAge();
 
-  // Tag chip logic
+  // Tag chips
   function setupChips(containerId, hiddenInputId) {
     const container = document.getElementById(containerId);
     const hidden = document.getElementById(hiddenInputId);
     const selected = new Set();
-
     container.addEventListener("click", e => {
       if (e.target.classList.contains("tag-chip")) {
         const tag = e.target.dataset.tag;
@@ -202,90 +184,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
   setupChips("preferred-tags", "preferredTagsInput");
   setupChips("dealbreaker-tags", "dealbreakerTagsInput");
-
-  // 🦝 AJAX Like Button with Smooth Removal + Replacement
-  document.querySelectorAll(".like-form").forEach(form => {
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const button = form.querySelector(".like-btn");
-      const username = button.dataset.username;
-      const card = document.getElementById("user-card-" + username);
-      const col = card.closest(".col");
-
-      // ❤️ Animate raccoon
-      button.classList.add("liked");
-      button.innerText = "❤️";
-
-      fetch(form.action, {
-        method: "POST",
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-      }).then(() => {
-        setTimeout(() => {
-          col.style.transition = "opacity 0.4s ease, transform 0.4s ease";
-          col.style.opacity = "0";
-          col.style.transform = "translateY(10px)";
-
-          setTimeout(() => {
-            col.remove();
-
-            // 🔄 Fetch and insert a new user card
-            const shownUsernames = Array.from(document.querySelectorAll(".like-btn"))
-              .map(btn => btn.dataset.username)
-              .filter(Boolean);
-
-            fetch("/next-user", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ shown_usernames: shownUsernames })
-            })
-            .then(response => response.text())
-            .then(html => {
-              if (html.trim()) {
-                const temp = document.createElement("div");
-                temp.innerHTML = html;
-                const newCard = temp.firstElementChild;
-
-                newCard.classList.add("fade-in"); // 👈 animation
-
-                document.querySelector(".row.row-cols-1.row-cols-md-2").appendChild(newCard);
-              }
-            });
-          }, 500);
-        }, 300);
-      });
-    });
-  });
 });
-  document.querySelectorAll(".report-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const username = btn.dataset.username;
-    if (confirm(`Report ${username}?`)) {
-      fetch(`/report/${username}`, { method: "POST" })
-        .then(() => alert("User reported."))
-        .catch(err => alert("Error reporting user."));
-    }
-  });
-});
-
-document.querySelectorAll(".block-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const username = btn.dataset.username;
-    if (confirm(`Block ${username}? This action is permanent.`)) {
-      fetch(`/block/${username}`, { method: "POST" })
-        .then(() => {
-          // Optional: remove user card from UI
-          const card = btn.closest(".col");
-          card?.remove();
-        })
-        .catch(err => alert("Error blocking user."));
-    }
-  });
-});
-
 </script>
 {% endblock %}
