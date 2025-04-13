@@ -463,9 +463,8 @@ def profile():
         c = conn.cursor()
 
         # 🧠 Get profile data
-        # 🧠 Get profile data
         c.execute("""
-            SELECT display_name, age, location, favorite_animal,
+            SELECT display_name, birthday, location, favorite_animal,
                    dog_free_reason, profile_pic, bio, gender,
                    interests, main_tag, tags,
                    gallery_image_1, gallery_image_2, gallery_image_3,
@@ -484,9 +483,10 @@ def profile():
 
         conn.close()
 
-        (display_name, age, location, favorite_animal, dog_free_reason,
+        (display_name, birthday, location, favorite_animal, dog_free_reason,
          profile_pic, bio, gender, interests, main_tag, tags_string,
          g1, g2, g3, g4, g5, email_verified) = result or (None,) * 17
+        age = calculate_age(birthday) if birthday else "?"
 
         gallery_images = [g for g in [g1, g2, g3, g4, g5] if g]
 
@@ -770,7 +770,7 @@ def browse():
 
     # Fetch all other users (excluding self, liked, and blocked)
     c.execute("""
-        SELECT display_name, username, age, location, favorite_animal, 
+        SELECT display_name, username, birthday, location, favorite_animal, 
                dog_free_reason, profile_pic, bio, gender, interests, main_tag, tags,
                latitude, longitude
         FROM users
@@ -809,13 +809,15 @@ def browse():
 
     def score_user(user):
         score = 0
-        (display_name, username, age, loc, _, _, _, _, gender, _, _, tags_str,
+        (display_name, username, birthday, loc, _, _, _, _, gender, _, _, tags_str,
          lat, lon) = user
+        user_age = calculate_age(birthday)
 
-        if min_age and age and int(age) >= int(min_age):
+        if min_age and user_age and user_age >= int(min_age):
             score += 1
-        if max_age and age and int(age) <= int(max_age):
+        if max_age and user_age and user_age <= int(max_age):
             score += 1
+
         if location_input and loc and location_input in loc.lower():
             score += 1
         if gender_input and gender and gender_input == gender.lower():
@@ -873,7 +875,7 @@ def next_user():
     # Fetch next best user
     placeholders = ",".join("?" for _ in exclude_usernames)
     query = f"""
-        SELECT display_name, username, age, location, favorite_animal, 
+        SELECT display_name, username, birthday, location, favorite_animal, 
                dog_free_reason, profile_pic, bio, gender, interests, main_tag, tags,
                latitude, longitude
         FROM users
@@ -902,7 +904,7 @@ def view_user_profile(username):
 
     # Get user info
     c.execute("""
-        SELECT display_name, age, location, favorite_animal,
+        SELECT display_name, birthday, location, favorite_animal,
        dog_free_reason, profile_pic, bio, gender, interests, main_tag, tags,
        gallery_image_1, gallery_image_2, gallery_image_3,
        gallery_image_4, gallery_image_5
@@ -975,7 +977,7 @@ def matches():
     if mutual_matches:
         placeholders = ",".join("?" * len(mutual_matches))
         c.execute(f"""
-            SELECT display_name, username, age, location, favorite_animal, profile_pic, main_tag, last_login
+            SELECT display_name, username, birthday, location, favorite_animal, profile_pic, main_tag, last_login
             FROM users WHERE username IN ({placeholders})
         """, tuple(mutual_matches))
 
