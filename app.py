@@ -151,25 +151,25 @@ def reset_password(token):
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
-
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        # Retrieve form data
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
         dog_free = request.form.get("dog_free")
 
+        # Validate password complexity
         import re
-
         if not re.match(r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}$', password):
-            flash(
-                "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.",
-                "danger")
+            flash("Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.", "danger")
             return redirect(url_for("signup"))
 
+        # Ensure the user agrees to the dog-free oath
         if dog_free != "on":
             flash("You must agree to the Dog-Free Oath to join Muzzle.", "danger")
             return redirect(url_for("signup"))
 
-        # Get all form data
+        # Retrieve additional form data
         display_name = request.form.get("display_name", "")
         age = request.form.get("age", None)
         location = request.form.get("location", "")
@@ -177,36 +177,55 @@ def signup():
         dog_free_reason = request.form.get("dog_free_reason", "")
         bio = request.form.get("bio", "")
         gender = request.form.get("gender", "")
+        sexuality = request.form.get("sexuality", "")
+        show_gender = 1 if request.form.get("show_gender") == "on" else 0
+        show_sexuality = 1 if request.form.get("show_sexuality") == "on" else 0
         interests = request.form.get("interests", "")
         main_tag = request.form.get("main_tag", "")
         tags = request.form.getlist("tags")
         all_tags = [main_tag] + tags
         tags_string = ",".join(tags)
 
-        # Validation: must include at least one pet-related tag
+        # Validate that at least one pet-related tag is selected
         pet_tags = {
             "Fully Pet-Free", "Allergic to Everything", "Reptile Roomie", "Cat Companion",
             "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person",
             "Bug Buddy", "My Pet’s a Vibe", "No Bark Zone", "Clean House > Cute Paws"
         }
         if not any(tag in pet_tags for tag in all_tags):
-            return "You must select at least one pet-related tag (main or additional)."
+            flash("You must select at least one pet-related tag (main or additional).", "danger")
+            return redirect(url_for("signup"))
 
         try:
             conn = sqlite3.connect("users.db")
             c = conn.cursor()
+
+            # Check if the email is already registered
+            c.execute("SELECT 1 FROM users WHERE email = ?", (email,))
+            if c.fetchone():
+                flash("Email is already registered.", "danger")
+                return redirect(url_for("signup"))
+
+            # Check if the username is already taken
+            c.execute("SELECT 1 FROM users WHERE username = ?", (username,))
+            if c.fetchone():
+                flash("Username already taken.", "danger")
+                return redirect(url_for("signup"))
+
+            # Hash the password
             hashed_password = generate_password_hash(password)
 
+            # Insert the new user into the database
             c.execute("""
                 INSERT INTO users (
-                    username, password, display_name, age, location,
+                    username, email, password, display_name, age, location,
                     favorite_animal, dog_free_reason, profile_pic, bio,
                     gender, sexuality, show_gender, show_sexuality, interests, main_tag, tags
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                username, hashed_password, display_name, age, location,
+                username, email, hashed_password, display_name, age, location,
                 favorite_animal, dog_free_reason, "", bio,
-                gender, "", 1, 0, interests, main_tag, tags_string
+                gender, sexuality, show_gender, show_sexuality, interests, main_tag, tags_string
             ))
 
             conn.commit()
@@ -215,9 +234,14 @@ def signup():
             return redirect(url_for("login"))
 
         except sqlite3.IntegrityError:
-            return "Username already exists!"
+            conn.rollback()
+            conn.close()
+            flash("An account with this email or username already exists.", "danger")
+            return redirect(url_for("signup"))
 
     return render_template("signup.html", username=request.form.get("username", ""))
+
+
 
 @app.route("/terms")
 def terms():
