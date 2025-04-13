@@ -177,7 +177,8 @@ def signup():
         # Retrieve additional form data
         display_name = request.form.get("display_name", "")
         birthday = request.form.get("birthday")
-        location = request.form.get("location", "")
+        latitude = request.form.get("latitude")
+        longitude = request.form.get("longitude")
         favorite_animal = request.form.get("favorite_animal", "")
         dog_free_reason = request.form.get("dog_free_reason", "")
         bio = request.form.get("bio", "")
@@ -223,12 +224,12 @@ def signup():
             # Insert the new user into the database
             c.execute("""
                 INSERT INTO users (
-                    username, email, password, display_name, birthday, location,
+                    username, email, password, display_name, birthday, latitude, longitude,
                     favorite_animal, dog_free_reason, profile_pic, bio,
                     gender, sexuality, show_gender, show_sexuality, interests, main_tag, tags
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                username, email, hashed_password, display_name, birthday, location,
+                username, email, hashed_password, display_name, birthday, latitude, longitude,
                 favorite_animal, dog_free_reason, "", bio,
                 gender, sexuality, show_gender, show_sexuality, interests, main_tag, tags_string
             ))
@@ -534,7 +535,8 @@ def settings():
         # === Text fields ===
         display_name = request.form.get("display_name", "")
         birthday = request.form.get("birthday")
-        location = request.form.get("location", "")
+        latitude = request.form.get("latitude")
+        longitude = request.form.get("longitude")
         favorite_animal = request.form.get("favorite_animal", "")
         dog_free_reason = request.form.get("dog_free_reason", "")
         bio = request.form.get("bio", "")
@@ -561,14 +563,14 @@ def settings():
         # === Update profile info ===
         c.execute("""
             UPDATE users SET
-                display_name = ?, birthday = ?, location = ?, favorite_animal = ?,
-                dog_free_reason = ?, bio = ?, gender = ?, sexuality = ?, show_gender = ?, 
-                show_sexuality = ?, interests = ?, main_tag = ?, tags = ?
+                display_name = ?, age = ?, favorite_animal = ?, dog_free_reason = ?,
+                bio = ?, gender = ?, sexuality = ?, show_gender = ?, show_sexuality = ?,
+                interests = ?, main_tag = ?, tags = ?, latitude = ?, longitude = ?
             WHERE username = ?
         """, (
-            display_name, birthday, location, favorite_animal, dog_free_reason,
+            display_name, birthday, favorite_animal, dog_free_reason,
             bio, gender, sexuality, show_gender, show_sexuality,
-            interests, main_tag, tags_string, username
+            interests, main_tag, tags_string, latitude, longitude, username
         ))
 
         # === Handle gallery image uploads ===
@@ -616,7 +618,8 @@ def complete_profile():
         new_username = request.form.get("new_username", "").strip()
         display_name = request.form.get("display_name", "").strip()
         birthday = request.form.get("birthday")  # ✅ new birthday field
-        location = request.form.get("location", "")
+        latitude = request.form.get("latitude")
+        longitude = request.form.get("longitude")
         favorite_animal = request.form.get("favorite_animal", "")
         dog_free_reason = request.form.get("dog_free_reason", "")
         bio = request.form.get("bio", "")
@@ -648,15 +651,13 @@ def complete_profile():
         # Update user profile
         c.execute("""
             UPDATE users SET
-                username = ?, display_name = ?, birthday = ?, location = ?,
+                username = ?, display_name = ?, age = ?, latitude = ?, longitude = ?,
                 favorite_animal = ?, dog_free_reason = ?, bio = ?, gender = ?,
-                sexuality = ?, show_gender = ?, show_sexuality = ?,
                 interests = ?, main_tag = ?, tags = ?
             WHERE username = ?
         """, (
-            new_username, display_name, birthday, location, favorite_animal,
-            dog_free_reason, bio, gender, sexuality, show_gender, show_sexuality,
-            interests, main_tag, tags_string, username
+            new_username, display_name, birthday, latitude, longitude,
+            favorite_animal, dog_free_reason, bio, gender, interests, main_tag, tags_string, username
         ))
 
         conn.commit()

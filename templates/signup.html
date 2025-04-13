@@ -185,9 +185,13 @@
             </div>
 
             <div class="mb-3">
-                <label for="location" class="form-label">Location</label>
-                <input type="text" id="location" name="location" class="form-control">
+                <label class="form-label"><strong>Location</strong></label><br>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="requestUserLocation()">📍 Use My Location</button>
+                <div id="location-status" class="form-text mt-2 text-muted">Location not set yet.</div>
+                <input type="hidden" id="latitude" name="latitude">
+                <input type="hidden" id="longitude" name="longitude">
             </div>
+
 
             <div class="mb-3">
                 <label for="favorite_animal" class="form-label">Favorite Animal (besides dogs)</label>
@@ -225,5 +229,33 @@
             <a href="/login">Already have an account? Log in</a>
         </div>
     </div>
+
+<script>
+function requestUserLocation() {
+    const status = document.getElementById("location-status");
+    if (!navigator.geolocation) {
+        status.textContent = "Geolocation is not supported by your browser.";
+        return;
+    }
+
+    status.textContent = "Detecting location...";
+
+    navigator.geolocation.getCurrentPosition(
+        position => {
+            const lat = position.coords.latitude.toFixed(6);
+            const lon = position.coords.longitude.toFixed(6);
+
+            document.getElementById("latitude").value = lat;
+            document.getElementById("longitude").value = lon;
+
+            status.textContent = `Location set (Lat: ${lat}, Lon: ${lon})`;
+        },
+        error => {
+            status.textContent = "Unable to retrieve location.";
+        }
+    );
+}
+</script>
+
 </body>
 </html>
