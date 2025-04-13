@@ -176,7 +176,7 @@ def signup():
 
         # Retrieve additional form data
         display_name = request.form.get("display_name", "")
-        age = request.form.get("age", None)
+        birthday = request.form.get("birthday")
         location = request.form.get("location", "")
         favorite_animal = request.form.get("favorite_animal", "")
         dog_free_reason = request.form.get("dog_free_reason", "")
@@ -223,12 +223,12 @@ def signup():
             # Insert the new user into the database
             c.execute("""
                 INSERT INTO users (
-                    username, email, password, display_name, age, location,
+                    username, email, password, display_name, birthday, location,
                     favorite_animal, dog_free_reason, profile_pic, bio,
                     gender, sexuality, show_gender, show_sexuality, interests, main_tag, tags
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                username, email, hashed_password, display_name, age, location,
+                username, email, hashed_password, display_name, birthday, location,
                 favorite_animal, dog_free_reason, "", bio,
                 gender, sexuality, show_gender, show_sexuality, interests, main_tag, tags_string
             ))
