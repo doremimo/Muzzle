@@ -7,6 +7,8 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
+from country_list import countries_for_language
+
 
 
 
@@ -855,8 +857,10 @@ def browse():
 
     scored_users.sort(key=lambda x: x[1], reverse=True)
     conn.close()
-    return render_template("browse.html", users=scored_users)
 
+    country_list = dict(countries_for_language('en'))  # ✅ add this
+
+    return render_template("browse.html", users=scored_users, country_list=country_list)  # ✅ updated
 
 
 @app.route("/next-user", methods=["POST"])
