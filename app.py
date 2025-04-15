@@ -538,6 +538,8 @@ def settings():
         # === Text fields ===
         display_name = request.form.get("display_name", "")
         birthday = request.form.get("birthday")
+        location = request.form.get("location", "")
+        country = request.form.get("country", "")
         latitude = request.form.get("latitude")
         longitude = request.form.get("longitude")
         favorite_animal = request.form.get("favorite_animal", "")
@@ -566,14 +568,14 @@ def settings():
         # === Update profile info ===
         c.execute("""
             UPDATE users SET
-                display_name = ?, age = ?, favorite_animal = ?, dog_free_reason = ?,
-                bio = ?, gender = ?, sexuality = ?, show_gender = ?, show_sexuality = ?,
-                interests = ?, main_tag = ?, tags = ?, latitude = ?, longitude = ?
+                display_name = ?, age = ?, location = ?, country = ?, latitude = ?, longitude = ?,
+                favorite_animal = ?, dog_free_reason = ?, bio = ?, gender = ?, sexuality = ?,
+                show_gender = ?, show_sexuality = ?, interests = ?, main_tag = ?, tags = ?
             WHERE username = ?
         """, (
-            display_name, birthday, favorite_animal, dog_free_reason,
-            bio, gender, sexuality, show_gender, show_sexuality,
-            interests, main_tag, tags_string, latitude, longitude, username
+            display_name, birthday, location, country, latitude, longitude,
+            favorite_animal, dog_free_reason, bio, gender, sexuality,
+            show_gender, show_sexuality, interests, main_tag, tags_string, username
         ))
 
         # === Handle gallery image uploads ===
@@ -594,13 +596,14 @@ def settings():
     # === GET request: load current data ===
     c.execute("""
         SELECT display_name, birthday, location, favorite_animal, dog_free_reason,
-               bio, gender, interests, main_tag, tags
+               bio, gender, interests, main_tag, tags, country
         FROM users WHERE username = ?
     """, (username,))
     data = c.fetchone()
     conn.close()
 
-    return render_template("settings.html", data=data)
+    country_list = dict(countries_for_language("en"))
+    return render_template("settings.html", data=data, country_list=country_list)
 
 
 @app.route("/complete-profile", methods=["GET", "POST"])
@@ -621,6 +624,8 @@ def complete_profile():
         new_username = request.form.get("new_username", "").strip()
         display_name = request.form.get("display_name", "").strip()
         birthday = request.form.get("birthday")  # ✅ new birthday field
+        location = request.form.get("location", "")
+        country = request.form.get("country")
         latitude = request.form.get("latitude")
         longitude = request.form.get("longitude")
         favorite_animal = request.form.get("favorite_animal", "")
@@ -654,7 +659,7 @@ def complete_profile():
         # Update user profile
         c.execute("""
             UPDATE users SET
-                username = ?, display_name = ?, age = ?, latitude = ?, longitude = ?,
+                username = ?, display_name = ?, age = ?, location = ?, country = ?, latitude = ?, longitude = ?,
                 favorite_animal = ?, dog_free_reason = ?, bio = ?, gender = ?,
                 interests = ?, main_tag = ?, tags = ?
             WHERE username = ?
@@ -677,7 +682,9 @@ def complete_profile():
     display_name = row[0] if row else ""
     conn.close()
 
-    return render_template("complete_profile.html", display_name=display_name, username=username)
+    country_list = dict(countries_for_language("en"))
+    return render_template("complete_profile.html", display_name=display_name, username=username, country_list=country_list)
+
 
 
 

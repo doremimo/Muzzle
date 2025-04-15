@@ -13,6 +13,7 @@ c.execute("""
         display_name TEXT,
         birthday TEXT,
         location TEXT,
+        country TEXT,
         favorite_animal TEXT,
         dog_free_reason TEXT,
         profile_pic TEXT,
