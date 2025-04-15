@@ -267,18 +267,30 @@ def login():
         c = conn.cursor()
         c.execute("SELECT password FROM users WHERE username = ?", (username,))
         result = c.fetchone()
-        conn.close()
 
         if result and check_password_hash(result[0], password):
-            update_last_login(username)
             session["username"] = username
+            login_time = datetime.now()
+            session["login_time"] = login_time.isoformat()
+
+            # ✅ Update last login timestamp in users table
+            c.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE username = ?", (username,))
+
+            # ✅ Insert login event into session_logs
+            c.execute("INSERT INTO session_logs (username, login_time) VALUES (?, ?)", (username, login_time))
+
+            conn.commit()
+            conn.close()
             return redirect(url_for("profile"))
+
         else:
+            conn.close()
             flash("Invalid username or password!", "danger")
             return render_template("login_options.html", username=username)
 
     # Handle GET request
     return render_template("login_options.html", username="")
+
 
 @app.route('/login/google')
 def google_login():
@@ -307,6 +319,7 @@ def google_callback():
 
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
+
     c.execute("SELECT username FROM users WHERE username = ?", (email,))
     existing_user = c.fetchone()
 
@@ -314,21 +327,29 @@ def google_callback():
         display_name = generate_display_name()
         c.execute("""
             INSERT INTO users (username, email, password, display_name, email_verified)
-            VALUES (?, ?, ?, ?, 0)
+            VALUES (?, ?, ?, ?, 1)
         """, (email, email, generate_password_hash("google_oauth_login"), display_name))
-
         conn.commit()
-        send_verification_email(email)  # ← Send email verification
         session["needs_profile_completion"] = True
 
-    conn.close()
+    # ✅ Set login time and session
+    login_time = datetime.now()
     session["username"] = email
-    flash("Logged in with Google!", "success")
+    session["login_time"] = login_time.isoformat()
 
+    # ✅ Update last login + log the session
+    c.execute("UPDATE users SET last_login = ? WHERE username = ?", (login_time, email))
+    c.execute("INSERT INTO session_logs (username, login_time) VALUES (?, ?)", (email, login_time))
+
+    conn.commit()
+    conn.close()
+
+    flash("Logged in with Google!", "success")
     if session.pop("needs_profile_completion", False):
         return redirect(url_for("google_terms"))
-
     return redirect(url_for("profile"))
+
+
 
 @app.route("/google-terms", methods=["GET", "POST"])
 def google_terms():
@@ -1348,8 +1369,33 @@ def block_user(username):
 
 @app.route("/logout")
 def logout():
+    username = session.get("username")
+    login_time_str = session.get("login_time")
+
+    if username and login_time_str:
+        try:
+            from datetime import datetime
+            logout_time = datetime.now()
+            login_time = datetime.fromisoformat(login_time_str)
+            duration_seconds = int((logout_time - login_time).total_seconds())
+
+            conn = sqlite3.connect("users.db")
+            c = conn.cursor()
+            c.execute("""
+                UPDATE session_logs
+                SET logout_time = ?, duration_seconds = ?
+                WHERE username = ? AND login_time = ?
+            """, (logout_time, duration_seconds, username, login_time))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print("Error logging session duration:", e)
+
+    # Clear session
     session.pop("username", None)
+    session.pop("login_time", None)
     return redirect(url_for("login"))
+
 
 @app.context_processor
 def inject_unread_count():
@@ -1389,6 +1435,42 @@ def debug_likes():
 
     return "<br>".join([f"{liker} liked {liked}" for liker, liked in rows])
 
+@app.route("/admin/stats")
+def admin_stats():
+    if session.get("username") != "admin":
+        return "Unauthorized", 403  # Optional: restrict access
+
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+
+    # Total users
+    c.execute("SELECT COUNT(*) FROM users")
+    total_users = c.fetchone()[0]
+
+    # Recent logins
+    c.execute("SELECT username, last_login FROM users ORDER BY last_login DESC LIMIT 10")
+    recent_logins = c.fetchall()
+
+    conn.close()
+
+    # Session duration (optional)
+    login_time = session.get("login_time")
+    duration = None
+    if login_time:
+        try:
+            duration = datetime.now() - datetime.fromisoformat(login_time)
+        except:
+            pass
+
+    return f"""
+        <h1>Admin Stats</h1>
+        <p>Total users: {total_users}</p>
+        <p>Session duration: {duration}</p>
+        <h3>Recent Logins:</h3>
+        <ul>
+            {''.join(f"<li>{u} — {t}</li>" for u, t in recent_logins)}
+        </ul>
+    """
 
 
 if __name__ == "__main__":

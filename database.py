@@ -94,5 +94,19 @@ c.execute("""
     )
 """)
 
+# Create session_logs table to track login/logout activity
+c.execute("""
+    CREATE TABLE IF NOT EXISTS session_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        login_time DATETIME,
+        logout_time DATETIME,
+        duration_seconds INTEGER
+    )
+""")
+
+
+
+
 conn.commit()
 conn.close()
