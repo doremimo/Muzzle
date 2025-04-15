@@ -313,9 +313,10 @@ def google_callback():
     if not existing_user:
         display_name = generate_display_name()
         c.execute("""
-            INSERT INTO users (username, password, display_name, email_verified)
-            VALUES (?, ?, ?, 0)
-        """, (email, generate_password_hash("google_oauth_login"), display_name))
+            INSERT INTO users (username, email, password, display_name, email_verified)
+            VALUES (?, ?, ?, ?, 0)
+        """, (email, email, generate_password_hash("google_oauth_login"), display_name))
+
         conn.commit()
         send_verification_email(email)  # ← Send email verification
         session["needs_profile_completion"] = True
@@ -616,6 +617,14 @@ def complete_profile():
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
 
+    if session.get("google_user"):
+        # Don't allow changing email for Google users — fetch from DB
+        c.execute("SELECT email FROM users WHERE username = ?", (username,))
+        email_row = c.fetchone()
+        email = email_row[0] if email_row else ""
+    else:
+        email = request.form.get("email", "").strip()
+
     if request.method == "POST":
         if not request.form.get("agree_terms"):
             flash("You must agree to the Terms of Use to continue.", "danger")
@@ -646,6 +655,11 @@ def complete_profile():
             flash("Username already taken.", "danger")
             return redirect(url_for("complete_profile"))
 
+        c.execute("SELECT 1 FROM users WHERE email = ? AND username != ?", (email, username))
+        if c.fetchone():
+            flash("Email is already in use.", "danger")
+            return redirect(url_for("complete_profile"))
+
         # Pet tag validation
         pet_tags = {
             "Fully Pet-Free", "Allergic to Everything", "Reptile Roomie", "Cat Companion",
@@ -659,13 +673,13 @@ def complete_profile():
         # Update user profile
         c.execute("""
             UPDATE users SET
-                username = ?, display_name = ?, birthday = ?, location = ?, country = ?, latitude = ?, longitude = ?,
-                favorite_animal = ?, dog_free_reason = ?, bio = ?, gender = ?,
+                username = ?, email = ?, display_name = ?, birthday = ?, location = ?, country = ?, latitude = ?, longitude = ?,
+                favorite_animal = ?, dog_free_reason = ?, bio = ?, gender = ?, sexuality = ?, show_gender = ?, show_sexuality = ?,
                 interests = ?, main_tag = ?, tags = ?
             WHERE username = ?
         """, (
-            new_username, display_name, birthday, location, country, latitude, longitude,
-            favorite_animal, dog_free_reason, bio, gender,
+            new_username, email, display_name, birthday, location, country, latitude, longitude,
+            favorite_animal, dog_free_reason, bio, gender, sexuality, show_gender, show_sexuality,
             interests, main_tag, tags_string, username
         ))
 
@@ -678,13 +692,20 @@ def complete_profile():
         return redirect(url_for("profile"))
 
     # Pre-fill display_name from DB
-    c.execute("SELECT display_name FROM users WHERE username = ?", (username,))
+    c.execute("SELECT display_name, email FROM users WHERE username = ?", (username,))
     row = c.fetchone()
     display_name = row[0] if row else ""
+    email = row[1] if row else ""
     conn.close()
 
     country_list = dict(countries_for_language("en"))
-    return render_template("complete_profile.html", display_name=display_name, username=username, country_list=country_list)
+    return render_template(
+        "complete_profile.html",
+        display_name=display_name,
+        email=email,
+        username=username,
+        country_list=country_list
+    )
 
 
 

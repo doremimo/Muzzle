@@ -9,8 +9,14 @@
     <h2>Finish setting up your profile</h2>
 
     <form method="POST" action="{{ url_for('complete_profile') }}">
-        <label>Email (not editable):</label><br>
-        <input type="text" value="{{ username }}" disabled><br><br>
+        {% if not session.get("google_user") %}
+          <label for="email">Email Address:</label><br>
+          <input type="email" id="email" name="email" value="{{ email }}" required><br><br>
+        {% else %}
+          <label>Email (Google Sign-in, cannot be changed):</label><br>
+          <input type="text" value="{{ email }}" disabled><br><br>
+        {% endif %}
+
 
         <label for="new_username">Choose a username:</label><br>
         <input type="text" id="new_username" name="new_username" required><br><br>
