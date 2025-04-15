@@ -780,6 +780,30 @@ def browse():
     c.execute("SELECT blocker FROM blocks WHERE blocked = ?", (session["username"],))
     blocked_you = {row[0] for row in c.fetchall()}
 
+    def infer_attracted_genders(user_gender, user_sexuality):
+        if not user_gender or not user_sexuality:
+            return []  # No filtering
+        g = user_gender.lower()
+        s = user_sexuality.lower()
+        if s == "straight":
+            return ["Female"] if g == "male" else ["Male"]
+        elif s == "gay":
+            return ["Male"] if g == "male" else ["Female"] if g == "female" else []
+        elif s == "lesbian":
+            return ["Female"] if g == "female" else []
+        elif s == "bisexual":
+            return ["Male", "Female"]
+        elif s == "pansexual":
+            return ["Male", "Female", "Nonbinary", "Trans Man", "Trans Woman", "Other"]
+        else:
+            return []  # Asexual, Other, Prefer not to say
+
+    # Get current user's gender and sexuality
+    c.execute("SELECT gender, sexuality FROM users WHERE username = ?", (session["username"],))
+    row = c.fetchone()
+    user_gender, user_sexuality = row if row else (None, None)
+    attracted_genders = infer_attracted_genders(user_gender, user_sexuality)
+
     # Fetch all other users
     c.execute("""
         SELECT display_name, username, birthday, location, favorite_animal, 
@@ -815,6 +839,7 @@ def browse():
             return today.year - birthday.year - ((today.month, today.day) < (birthday.month, birthday.day))
         except:
             return None
+
 
     def score_user(user):
         score = 0
@@ -858,7 +883,13 @@ def browse():
     # Build final list
     scored_users = []
     for user in all_users:
+        if attracted_genders:
+            their_gender = user[8]  # gender field from user tuple
+            if their_gender not in attracted_genders:
+                continue  # skip user
         score = score_user(user)
+        ...
+
         if score >= 0:
             birthday = user[2]
             age = calculate_age(birthday) if birthday else "?"
