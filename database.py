@@ -105,6 +105,16 @@ c.execute("""
     )
 """)
 
+c.execute("""
+    CREATE TABLE IF NOT EXISTS session_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        login_time DATETIME,
+        logout_time DATETIME,
+        duration_seconds INTEGER
+    )
+""")
+
 
 
 

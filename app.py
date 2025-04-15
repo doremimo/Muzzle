@@ -1437,40 +1437,32 @@ def debug_likes():
 
 @app.route("/admin/stats")
 def admin_stats():
-    if session.get("username") != "admin":
-        return "Unauthorized", 403  # Optional: restrict access
-
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
 
-    # Total users
     c.execute("SELECT COUNT(*) FROM users")
     total_users = c.fetchone()[0]
 
-    # Recent logins
-    c.execute("SELECT username, last_login FROM users ORDER BY last_login DESC LIMIT 10")
-    recent_logins = c.fetchall()
+    c.execute("SELECT COUNT(*) FROM session_logs")
+    total_sessions = c.fetchone()[0]
+
+    c.execute("SELECT AVG(duration_seconds) FROM session_logs WHERE duration_seconds IS NOT NULL")
+    avg_duration = round(c.fetchone()[0] or 0)
+
+    c.execute("""
+        SELECT username, COUNT(*) as session_count
+        FROM session_logs
+        GROUP BY username
+        ORDER BY session_count DESC
+        LIMIT 5
+    """)
+    top_users = c.fetchall()
 
     conn.close()
 
-    # Session duration (optional)
-    login_time = session.get("login_time")
-    duration = None
-    if login_time:
-        try:
-            duration = datetime.now() - datetime.fromisoformat(login_time)
-        except:
-            pass
+    return render_template("admin_stats.html", total_users=total_users, total_sessions=total_sessions,
+                           avg_duration=avg_duration, top_users=top_users)
 
-    return f"""
-        <h1>Admin Stats</h1>
-        <p>Total users: {total_users}</p>
-        <p>Session duration: {duration}</p>
-        <h3>Recent Logins:</h3>
-        <ul>
-            {''.join(f"<li>{u} — {t}</li>" for u, t in recent_logins)}
-        </ul>
-    """
 
 
 if __name__ == "__main__":
