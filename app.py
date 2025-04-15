@@ -984,9 +984,9 @@ def matches():
 
     # 🧱 Exclude blocked users (either blocked by or blocked the current user)
     c.execute("""
-        SELECT blocked_user FROM blocks WHERE blocker = ?
+        SELECT blocked FROM blocks WHERE blocker = ?
         UNION
-        SELECT blocker FROM blocks WHERE blocked_user = ?
+        SELECT blocker FROM blocks WHERE blocked = ?
     """, (current_user, current_user))
     blocked_usernames = {row[0] for row in c.fetchall()}
 
