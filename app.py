@@ -247,7 +247,8 @@ def signup():
             flash("An account with this email or username already exists.", "danger")
             return redirect(url_for("signup"))
 
-    return render_template("signup.html", username=request.form.get("username", ""))
+    country_list = dict(countries_for_language('en'))
+    return render_template("signup.html", username=request.form.get("username", ""), country_list=country_list)
 
 
 

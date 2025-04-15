@@ -184,12 +184,24 @@
                 <textarea id="bio" name="bio" class="form-control" rows="3" placeholder="Write a little about yourself..."></textarea>
             </div>
 
-            <!-- 🌍 City Input with Autocomplete -->
+            <!-- 🌐 Country Select -->
+            <div class="mb-3">
+              <label for="countrySelect" class="form-label">Country</label>
+              <select id="countrySelect" name="country" class="form-select">
+                <option value="">Select a country</option>
+                {% for code, name in country_list.items() %}
+                  <option value="{{ code|lower }}">{{ name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- 🧠 Smart City Input -->
             <div class="mb-3">
               <label for="locationInput" class="form-label">City</label>
               <input type="text" class="form-control" name="location" id="locationInput" placeholder="Enter your city...">
-              <div id="citySuggestions" class="form-text text-muted"></div>
+              <div id="citySuggestions" class="list-group mt-1"></div>
             </div>
+
 
             <!-- 📍 Use My Location -->
             <div class="mb-3">
@@ -271,14 +283,21 @@ function requestUserLocation() {
 <script>
 const input = document.getElementById("locationInput");
 const suggestions = document.getElementById("citySuggestions");
+const countrySelect = document.getElementById("countrySelect");
 
 input.addEventListener("input", () => {
   const query = input.value.trim();
   suggestions.innerHTML = "";
-
   if (query.length < 3) return;
 
-  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`)
+  const country = countrySelect.value;
+  let apiUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
+  if (country) {
+    apiUrl += `&countrycodes=${country}`;
+
+  }
+
+  fetch(apiUrl)
     .then(res => res.json())
     .then(data => {
       data.forEach(place => {
@@ -298,13 +317,13 @@ input.addEventListener("input", () => {
     });
 });
 
-// Hide dropdown if user clicks elsewhere
 document.addEventListener("click", (e) => {
   if (!suggestions.contains(e.target) && e.target !== input) {
     suggestions.innerHTML = "";
   }
 });
 </script>
+
 
 
 </body>
