@@ -17,6 +17,16 @@
         </div>
       </div>
 
+      <!-- 🌍 Smart City Input -->
+      <div class="mb-3" style="position: relative;">
+        <label for="locationInput" class="form-label">City (optional)</label>
+        <input type="text" class="form-control" id="locationInput" name="location" placeholder="Enter a city">
+        <div id="citySuggestions" class="list-group" style="position: absolute; width: 100%; z-index: 1000;"></div>
+      </div>
+
+
+
+
       <!-- Location Proximity -->
       <div class="mb-3">
         <div class="form-check">
@@ -188,4 +198,91 @@ document.addEventListener("DOMContentLoaded", () => {
   setupChips("dealbreaker-tags", "dealbreakerTagsInput");
 });
 </script>
+
+// 🧠 Smart city autocomplete with dropdown suggestions
+const cityInput = document.getElementById("locationInput");
+const suggestionList = document.createElement("ul");
+suggestionList.id = "citySuggestions";
+suggestionList.className = "list-group mt-1";
+suggestionList.style.position = "absolute";
+suggestionList.style.zIndex = "1000";
+suggestionList.style.display = "none";
+suggestionList.style.width = "100%";
+cityInput.parentNode.appendChild(suggestionList);
+
+cityInput.addEventListener("input", function () {
+  const query = cityInput.value.trim();
+  if (query.length < 3) {
+    suggestionList.style.display = "none";
+    return;
+  }
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`)
+    .then(response => response.json())
+    .then(data => {
+      suggestionList.innerHTML = "";
+      if (data.length > 0) {
+        data.forEach(place => {
+          const li = document.createElement("li");
+          li.className = "list-group-item list-group-item-action";
+          li.textContent = place.display_name;
+          li.addEventListener("click", () => {
+            cityInput.value = place.display_name;
+            document.getElementById("latInput").value = place.lat;
+            document.getElementById("lonInput").value = place.lon;
+            suggestionList.style.display = "none";
+          });
+          suggestionList.appendChild(li);
+        });
+        suggestionList.style.display = "block";
+      } else {
+        suggestionList.style.display = "none";
+      }
+    });
+});
+
+document.addEventListener("click", (e) => {
+  if (!suggestionList.contains(e.target) && e.target !== cityInput) {
+    suggestionList.style.display = "none";
+  }
+});
+<script>
+const input = document.getElementById("locationInput");
+const suggestions = document.getElementById("citySuggestions");
+
+input.addEventListener("input", () => {
+  const query = input.value.trim();
+  suggestions.innerHTML = "";
+
+  if (query.length < 3) return;
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`)
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(place => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = "list-group-item list-group-item-action";
+        option.textContent = place.display_name;
+        option.addEventListener("click", () => {
+          input.value = place.display_name;
+          document.getElementById("latInput").value = place.lat;
+          document.getElementById("lonInput").value = place.lon;
+          suggestions.innerHTML = "";
+        });
+        suggestions.appendChild(option);
+      });
+    });
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener("click", (e) => {
+  if (!suggestions.contains(e.target) && e.target !== input) {
+    suggestions.innerHTML = "";
+  }
+});
+</script>
+
+
+
 {% endblock %}
