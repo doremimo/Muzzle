@@ -568,7 +568,7 @@ def settings():
         # === Update profile info ===
         c.execute("""
             UPDATE users SET
-                display_name = ?, age = ?, location = ?, country = ?, latitude = ?, longitude = ?,
+                display_name = ?, birthday = ?, location = ?, country = ?, latitude = ?, longitude = ?,
                 favorite_animal = ?, dog_free_reason = ?, bio = ?, gender = ?, sexuality = ?,
                 show_gender = ?, show_sexuality = ?, interests = ?, main_tag = ?, tags = ?
             WHERE username = ?
@@ -659,13 +659,14 @@ def complete_profile():
         # Update user profile
         c.execute("""
             UPDATE users SET
-                username = ?, display_name = ?, age = ?, location = ?, country = ?, latitude = ?, longitude = ?,
+                username = ?, display_name = ?, birthday = ?, location = ?, country = ?, latitude = ?, longitude = ?,
                 favorite_animal = ?, dog_free_reason = ?, bio = ?, gender = ?,
                 interests = ?, main_tag = ?, tags = ?
             WHERE username = ?
         """, (
-            new_username, display_name, birthday, latitude, longitude,
-            favorite_animal, dog_free_reason, bio, gender, interests, main_tag, tags_string, username
+            new_username, display_name, birthday, location, country, latitude, longitude,
+            favorite_animal, dog_free_reason, bio, gender,
+            interests, main_tag, tags_string, username
         ))
 
         conn.commit()
