@@ -30,13 +30,24 @@
             <input type="date" class="form-control" id="birthday" name="birthday" value="{{ data[1] or '' }}">
           </div>
 
+         <!-- 🌍 City Input with Autocomplete -->
           <div class="mb-3">
-              <label class="form-label"><strong>Location</strong></label><br>
-              <button type="button" class="btn btn-outline-primary btn-sm" onclick="requestUserLocation()">📍 Use My Location</button>
-              <div id="location-status" class="form-text mt-2 text-muted">Location not set yet.</div>
-              <input type="hidden" id="latitude" name="latitude">
-              <input type="hidden" id="longitude" name="longitude">
+            <label for="locationInput" class="form-label">City</label>
+            <input type="text" class="form-control" id="locationInput" name="location" placeholder="Enter your city..." value="{{ data[2] or '' }}">
+            <div id="citySuggestions" class="form-text text-muted"></div>
           </div>
+
+          <!-- 📍 Use My Location -->
+          <div class="mb-3">
+            <label class="form-label"><strong>Location</strong></label><br>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="requestUserLocation()">📍 Use My Location</button>
+            <div id="location-status" class="form-text mt-2 text-muted">Location not set yet.</div>
+          </div>
+
+          <!-- 🧭 Hidden Coordinates -->
+          <input type="hidden" id="latitude" name="latitude" value="{{ data[3] or '' }}">
+          <input type="hidden" id="longitude" name="longitude" value="{{ data[4] or '' }}">
+
 
 
           <div class="mb-3">
@@ -200,6 +211,45 @@ function requestUserLocation() {
     );
 }
 </script>
+<script>
+const input = document.getElementById("locationInput");
+const suggestions = document.getElementById("citySuggestions");
+
+input.addEventListener("input", () => {
+  const query = input.value.trim();
+  suggestions.innerHTML = "";
+
+  if (query.length < 3) return;
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`)
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(place => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = "list-group-item list-group-item-action";
+        option.textContent = place.display_name;
+        option.addEventListener("click", () => {
+          input.value = place.display_name;
+          document.getElementById("latitude").value = place.lat;
+          document.getElementById("longitude").value = place.lon;
+          document.getElementById("location-status").textContent = `🌍 Set to: ${place.display_name}`;
+          suggestions.innerHTML = "";
+        });
+        suggestions.appendChild(option);
+      });
+    });
+});
+
+// Hide dropdown if user clicks elsewhere
+document.addEventListener("click", (e) => {
+  if (!suggestions.contains(e.target) && e.target !== input) {
+    suggestions.innerHTML = "";
+  }
+});
+</script>
+
+
 
 {% endblock %}
 

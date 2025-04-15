@@ -21,11 +21,25 @@
         <label for="birthday">Birthday:</label><br>
         <input type="date" id="birthday" name="birthday"><br><br>
 
-        <label><strong>Location</strong></label><br>
-        <button type="button" class="btn btn-outline-primary btn-sm" onclick="requestUserLocation()">📍 Use My Location</button>
-        <div id="location-status" class="form-text mt-2 text-muted">Location not set yet.</div>
+        <!-- 🌍 City Input (Autocomplete + Coordinates) -->
+        <div class="mb-3 position-relative">
+          <label for="locationInput" class="form-label">City</label>
+          <input type="text" class="form-control" id="locationInput" name="location" placeholder="Enter your city..." autocomplete="off">
+          <div id="citySuggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+        </div>
+
+        <!-- 📍 Use My Location -->
+        <div class="mb-3">
+          <label class="form-label"><strong>Or use current location:</strong></label><br>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="requestUserLocation()">📍 Use My Location</button>
+          <div id="location-status" class="form-text mt-2 text-muted">Location not set yet.</div>
+        </div>
+
+        <!-- 🧭 Hidden lat/lon (shared by both methods) -->
         <input type="hidden" id="latitude" name="latitude">
-        <input type="hidden" id="longitude" name="longitude"><br><br>
+        <input type="hidden" id="longitude" name="longitude">
+
+
 
 
         <label for="favorite_animal">Favorite Animal:</label><br>
@@ -151,6 +165,45 @@ function requestUserLocation() {
     );
 }
 </script>
+<script>
+const input = document.getElementById("locationInput");
+const suggestions = document.getElementById("citySuggestions");
+
+input.addEventListener("input", () => {
+  const query = input.value.trim();
+  suggestions.innerHTML = "";
+
+  if (query.length < 3) return;
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`)
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(place => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = "list-group-item list-group-item-action";
+        option.textContent = place.display_name;
+        option.addEventListener("click", () => {
+          input.value = place.display_name;
+          document.getElementById("latitude").value = place.lat;
+          document.getElementById("longitude").value = place.lon;
+          document.getElementById("location-status").textContent = `🌍 Set to: ${place.display_name}`;
+          suggestions.innerHTML = "";
+        });
+        suggestions.appendChild(option);
+      });
+    });
+});
+
+// Hide dropdown if user clicks elsewhere
+document.addEventListener("click", (e) => {
+  if (!suggestions.contains(e.target) && e.target !== input) {
+    suggestions.innerHTML = "";
+  }
+});
+</script>
+
+
 
 </body>
 </html>
