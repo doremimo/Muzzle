@@ -23,8 +23,9 @@
         <select id="countrySelect" name="country" class="form-select">
           <option value="">Select a country</option>
           {% for code, name in country_list.items() %}
-            <option value="{{ name }}">{{ name }}</option>
+            <option value="{{ code }}">{{ name }}</option>
           {% endfor %}
+
         </select>
       </div>
 
@@ -32,7 +33,7 @@
       <div class="mb-3">
         <label for="locationInput" class="form-label">City (optional)</label>
         <input type="text" class="form-control" id="locationInput" name="location" placeholder="Enter a city">
-        <div id="citySuggestions" class="form-text text-muted"></div>
+        <div id="citySuggestions" class="list-group mt-1"></div>
       </div>
 
       <!-- Location Proximity -->
@@ -207,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
   maxSlider.addEventListener("input", syncAge);
   syncAge();
 
-  // 🧠 Smart City Search (with country)
+  // 🧠 Smart City Search (with optional country)
   const cityInput = document.getElementById("locationInput");
   const countrySelect = document.getElementById("countrySelect");
   const suggestions = document.getElementById("citySuggestions");
@@ -218,8 +219,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (query.length < 3) return;
 
     const country = countrySelect.value;
+    let apiUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
+    if (country) {
+      apiUrl += `&countrycodes=${encodeURIComponent(country.toLowerCase())}`;
 
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&country=${encodeURIComponent(country)}`)
+    }
+
+    fetch(apiUrl)
       .then(res => res.json())
       .then(data => {
         data.forEach(place => {
@@ -238,6 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 
+  // Close suggestions if user clicks elsewhere
   document.addEventListener("click", (e) => {
     if (!suggestions.contains(e.target) && e.target !== cityInput) {
       suggestions.innerHTML = "";
@@ -246,3 +253,4 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 {% endblock %}
+
