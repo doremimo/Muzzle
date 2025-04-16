@@ -1,0 +1,36 @@
+{
+  "name": "Muzzle",
+  "short_name": "Muzzle",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7e59c8",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/branding/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/branding/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+  {
+    "src": "/static/branding/Narrow.jpg",
+    "sizes": "540x720",
+    "type": "image/png",
+    "form_factor": "narrow"
+  },
+  {
+    "src": "/static/branding/Wide Shot.png",
+    "sizes": "1024x768",
+    "type": "image/png",
+    "form_factor": "wide"
+  }
+]
+
+}
