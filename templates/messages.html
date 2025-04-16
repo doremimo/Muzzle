@@ -61,9 +61,17 @@
     }
 
     #chatMessages {
-        color: #4b0082 !important;
-        scroll-behavior: smooth;
-    }
+    color: #4b0082 !important;
+    scroll-behavior: smooth;
+    height: 300px;
+    overflow-y: auto;
+    background: linear-gradient(to bottom right, #e7d5fa, #ffffff);
+    border-radius: 1rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
 
     .icebreaker-tag {
       background-color: #f0efff;
@@ -142,6 +150,50 @@
     .chat-black {
       color: black !important;
     }
+
+    <!-- for mobile only -->
+    @media (max-width: 576px) {
+  #chatMessages {
+    padding: 1rem;
+    border-radius: 0.75rem;
+    height: 320px; /* Optional: slight height increase */
+  }
+
+  .message-entry {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    max-width: 90%;
+  }
+
+  .message-entry img {
+    max-height: 150px;
+    border-radius: 0.5rem;
+  }
+
+  .input-group input,
+  .input-group button {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .icebreaker-tag {
+    font-size: 0.8rem;
+    padding: 5px 10px;
+  }
+
+  .icebreaker-close {
+    width: 16px;
+    height: 16px;
+    font-size: 0.7rem;
+  }
+
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
 
 
 
