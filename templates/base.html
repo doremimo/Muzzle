@@ -254,6 +254,9 @@
         <a href="{{ url_for('profile') }}" class="btn btn-outline-dark">👤 Profile</a>
         <a href="{{ url_for('settings') }}" class="btn btn-outline-dark">⚙️ Settings</a>
         <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">🚪 Logout</a>
+          {% if session.get("is_admin") %}
+            <a href="{{ url_for('admin_stats') }}" class="btn btn-outline-warning">📊 Admin Panel</a>
+          {% endif %}
       </div>
       {% block sidebar_extra %}{% endblock %}
     </div>

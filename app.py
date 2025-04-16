@@ -228,8 +228,9 @@ def signup():
                 INSERT INTO users (
                     username, email, password, display_name, birthday, latitude, longitude,
                     favorite_animal, dog_free_reason, profile_pic, bio,
-                    gender, sexuality, show_gender, show_sexuality, interests, main_tag, tags
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    gender, sexuality, show_gender, show_sexuality, interests, main_tag, tags,
+                    email_verified
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
             """, (
                 username, email, hashed_password, display_name, birthday, latitude, longitude,
                 favorite_animal, dog_free_reason, "", bio,
@@ -270,6 +271,10 @@ def login():
 
         if result and check_password_hash(result[0], password):
             session["username"] = username
+            c.execute("SELECT is_admin FROM users WHERE username = ?", (username,))
+            row = c.fetchone()
+            session["is_admin"] = (row[0] == 1) if row else False
+
             login_time = datetime.now()
             session["login_time"] = login_time.isoformat()
 
@@ -332,10 +337,21 @@ def google_callback():
         conn.commit()
         session["needs_profile_completion"] = True
 
+        # ✅ Make first user admin
+        c.execute("SELECT COUNT(*) FROM users")
+        user_count = c.fetchone()[0]
+        if user_count == 1:
+            c.execute("UPDATE users SET is_admin = 1 WHERE username = ?", (email,))
+
     # ✅ Set login time and session
     login_time = datetime.now()
     session["username"] = email
     session["login_time"] = login_time.isoformat()
+
+    # ✅ Check if user is admin
+    c.execute("SELECT is_admin FROM users WHERE username = ?", (email,))
+    row = c.fetchone()
+    session["is_admin"] = (row[0] == 1) if row else False
 
     # ✅ Update last login + log the session
     c.execute("UPDATE users SET last_login = ? WHERE username = ?", (login_time, email))
@@ -348,6 +364,7 @@ def google_callback():
     if session.pop("needs_profile_completion", False):
         return redirect(url_for("google_terms"))
     return redirect(url_for("profile"))
+
 
 
 
@@ -1437,9 +1454,22 @@ def debug_likes():
 
 @app.route("/admin/stats")
 def admin_stats():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session["username"]
+
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
 
+    # ✅ Check if current user is admin
+    c.execute("SELECT is_admin FROM users WHERE username = ?", (username,))
+    row = c.fetchone()
+    if not row or row[0] != 1:
+        conn.close()
+        return "Unauthorized", 403
+
+    # ✅ Gather analytics
     c.execute("SELECT COUNT(*) FROM users")
     total_users = c.fetchone()[0]
 
@@ -1460,8 +1490,11 @@ def admin_stats():
 
     conn.close()
 
-    return render_template("admin_stats.html", total_users=total_users, total_sessions=total_sessions,
-                           avg_duration=avg_duration, top_users=top_users)
+    return render_template("admin_stats.html", total_users=total_users,
+                           total_sessions=total_sessions,
+                           avg_duration=avg_duration,
+                           top_users=top_users)
+
 
 
 

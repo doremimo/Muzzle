@@ -28,7 +28,8 @@ c.execute("""
         latitude REAL,
         longitude REAL,
         email_verified INTEGER DEFAULT 0,
-        last_login DATETIME  -- Add the new column for tracking last login
+        last_login DATETIME,
+        is_admin INTEGER DEFAULT 0
     )
 """)
 
