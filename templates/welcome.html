@@ -1,40 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Muzzle</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* Adjust the title margin to move it lower */
-        h1 {
-            margin-top: 50px; /* Increase this value to move the title lower */
-            margin-bottom: 15px; /* Keep a little space between title and the content below */
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Muzzle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+</style>
+
+
 </head>
 <body>
-    <div class="container text-center" style="max-width: 400px;">
-        <!-- Larger Muzzle SVG logo -->
-        <h1>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" style="height: 120px;"> <!-- Increased height -->
-                <text x="50%" y="50%" font-family="Pacifico, cursive" font-size="60" text-anchor="middle" fill="url(#grad1)">Muzzle</text> <!-- Adjusted font-size -->
-                <defs>
-                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#d4b7ff;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#7e59c8;stop-opacity:1" />
-                    </linearGradient>
-                </defs>
-            </svg>
-        </h1>
-        <p class="mb-4">The dating app for dog-free singles.</p>
-        <a href="{{ url_for('google_login') }}" class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center">
-            <img src="https://developers.google.com/identity/images/g-logo.png" style="height:20px; margin-right:8px;">
-            Continue with Google
-        </a>
-        <hr class="my-4">
-        <a href="{{ url_for('manual_login') }}" class="btn btn-outline-secondary w-100 mb-2">Log In Manually</a>
-        <a href="{{ url_for('signup') }}" class="btn btn-secondary w-100">Sign Up Manually</a>
-    </div>
+  <div class="container text-center mt-5 px-3">
+
+
+    <!-- Larger Muzzle SVG logo -->
+    <h1>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" style="height: 120px;">
+        <text x="50%" y="50%" font-family="Pacifico, cursive" font-size="60" text-anchor="middle" fill="url(#grad1)">Muzzle</text>
+        <defs>
+          <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#d4b7ff;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#7e59c8;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </h1>
+
+    <p class="mb-4">The dating app for dog-free singles.</p>
+
+    <a href="{{ url_for('google_login') }}" class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center mb-3">
+      <img src="https://developers.google.com/identity/images/g-logo.png" style="height:20px; margin-right:8px;">
+      Continue with Google
+    </a>
+
+    <hr class="my-4">
+
+    <a href="{{ url_for('manual_login') }}" class="btn btn-outline-secondary w-100 mb-2">Log In Manually</a>
+    <a href="{{ url_for('signup') }}" class="btn btn-secondary w-100">Sign Up Manually</a>
+  </div>
 </body>
 </html>
-

@@ -1496,6 +1496,9 @@ def admin_stats():
                            top_users=top_users)
 
 
+@app.route("/test")
+def test_mobile():
+    return render_template("test_mobile.html")
 
 
 if __name__ == "__main__":
