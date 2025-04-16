@@ -1,7 +1,7 @@
 {
   "name": "Muzzle",
   "short_name": "Muzzle",
-  "start_url": "/",
+  "start_url": "/profile",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#7e59c8",
