@@ -317,6 +317,67 @@ function showLikeLimitBanner(message) {
   setTimeout(() => banner.style.display = "none", 6000);
 }
 
+  document.addEventListener("DOMContentLoaded", () => {
+  // Report Button
+  document.querySelectorAll(".report-btn").forEach(btn => {
+    btn.addEventListener("click", function () {
+      const username = this.dataset.username;
+      const card = document.getElementById(`user-card-${username}`);
+      fetch(`/report/${username}`, {
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest"
+        }
+      }).then(res => {
+        if (res.ok) {
+          card.classList.add("fade-out");
+          setTimeout(() => card.remove(), 400);
+        }
+      });
+    });
+  });
+
+  // Block Button
+  document.querySelectorAll(".block-btn").forEach(btn => {
+    btn.addEventListener("click", function () {
+      const username = this.dataset.username;
+      const card = document.getElementById(`user-card-${username}`);
+      fetch(`/block/${username}`, {
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest"
+        }
+      }).then(res => {
+        if (res.ok) {
+          card.classList.add("fade-out");
+          setTimeout(() => card.remove(), 400);
+        }
+      });
+    });
+  });
+});
+
+
+  document.querySelectorAll('.block-btn').forEach(button => {
+  button.addEventListener('click', function () {
+    const username = this.dataset.username;
+    const card = this.closest('.col');
+
+    fetch(`/block/${username}`, {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    }).then(response => {
+      if (response.status === 204) {
+        card.classList.add("fade-out");
+        setTimeout(() => card.remove(), 400);
+      }
+    });
+  });
+});
+
+
 
 </script>
 {% endblock %}

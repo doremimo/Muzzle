@@ -425,6 +425,20 @@
     transform: translateY(20px);
   }
 }
+    .card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
 
 
 

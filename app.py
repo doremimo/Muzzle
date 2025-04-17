@@ -1381,8 +1381,8 @@ def report(username):
         return redirect(url_for("login"))
 
     reporter = session["username"]
-    reason = request.form.get("reason")
-    comments = request.form.get("comments")
+    reason = request.form.get("reason", "")
+    comments = request.form.get("comments", "")
 
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
@@ -1393,8 +1393,12 @@ def report(username):
     conn.commit()
     conn.close()
 
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return "", 204  # No Content for AJAX
+
     flash(f"You reported @{username} for: {reason}")
     return redirect(url_for("browse"))
+
 
 @app.route("/block/<username>", methods=["POST"])
 def block_user(username):
