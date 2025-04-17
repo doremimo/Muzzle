@@ -39,6 +39,15 @@ google = oauth.register(
 )
 
 
+def calculate_age(birthday_str):
+    from datetime import datetime
+    try:
+        birthday = datetime.strptime(birthday_str, "%Y-%m-%d")
+        today = datetime.today()
+        return today.year - birthday.year - ((today.month, today.day) < (birthday.month, birthday.day))
+    except:
+        return None
+
 @app.route("/")
 def home():
     if "username" in session:
@@ -248,8 +257,13 @@ def signup():
 
             conn.commit()
             conn.close()
-            flash("Account created successfully!", "success")
+
+            # ✅ Send verification email after successful signup
+            send_verification_email(email)
+
+            flash("Account created successfully! Please check your email to verify.", "success")
             return redirect(url_for("login"))
+
 
         except sqlite3.IntegrityError:
             conn.rollback()
@@ -346,6 +360,9 @@ def google_callback():
         conn.commit()
         session["needs_profile_completion"] = True
 
+        # ✅ Send welcome email for new Google signup
+        send_welcome_email(email)
+
         # ✅ Make first user admin
         c.execute("SELECT COUNT(*) FROM users")
         user_count = c.fetchone()[0]
@@ -375,8 +392,6 @@ def google_callback():
     return redirect(url_for("profile"))
 
 
-
-
 @app.route("/google-terms", methods=["GET", "POST"])
 def google_terms():
     if "username" not in session:
@@ -402,7 +417,6 @@ def update_last_login(username):
     conn.commit()
     conn.close()
 
-#Verification Route
 @app.route('/verify/<token>')
 def verify_email(token):
     email = confirm_verification_token(token)
@@ -412,14 +426,14 @@ def verify_email(token):
 
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
-    c.execute("SELECT email_verified FROM users WHERE username = ?", (email,))
+    c.execute("SELECT email_verified FROM users WHERE email = ?", (email,))
     user = c.fetchone()
 
     if user:
         if user[0] == 1:
             flash('Email already verified!', 'info')
         else:
-            c.execute("UPDATE users SET email_verified = 1 WHERE username = ?", (email,))
+            c.execute("UPDATE users SET email_verified = 1 WHERE email = ?", (email,))
             conn.commit()
             flash('Email successfully verified!', 'success')
     else:
@@ -446,6 +460,23 @@ def confirm_verification_token(token, expiration=3600):
 # Sending the verification
 from flask_mail import Message
 
+def send_welcome_email(user_email):
+    msg = Message('Welcome to Muzzle 🐾', recipients=[user_email])
+    msg.body = f'''
+Hi there!
+
+Thanks for signing up for Muzzle — the dating app for dog-free singles 🐶🚫
+
+You're all set to start meeting like-minded people.
+
+Start browsing now and don’t forget to complete your profile!
+
+Cheers,  
+The Muzzle Team
+'''
+    mail.send(msg)
+
+
 def send_verification_email(user_email):
     token = generate_verification_token(user_email)
     verification_url = url_for('verify_email', token=token, _external=True)
@@ -467,20 +498,17 @@ The Muzzle Team
 '''
     mail.send(msg)
 
-
-
-
 @app.route('/resend-verification')
 def resend_verification():
     if "username" not in session:
         flash("Please log in first.", "warning")
         return redirect(url_for("login"))
 
-    email = session["username"]
+    username = session["username"]
 
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
-    c.execute("SELECT email_verified FROM users WHERE username = ?", (email,))
+    c.execute("SELECT email, email_verified FROM users WHERE username = ?", (username,))
     result = c.fetchone()
 
     if not result:
@@ -488,7 +516,7 @@ def resend_verification():
         conn.close()
         return redirect(url_for("profile"))
 
-    email_verified = result[0]
+    email, email_verified = result
     conn.close()
 
     if email_verified:
@@ -499,10 +527,6 @@ def resend_verification():
     send_verification_email(email)
     flash("Verification email resent!", "success")
     return redirect(url_for("profile"))
-
-
-
-
 
 
 @app.route("/profile")
@@ -912,15 +936,6 @@ def browse():
         a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
         return R * 2 * asin(sqrt(a))
 
-    def calculate_age(birthday_str):
-        from datetime import datetime
-        try:
-            birthday = datetime.strptime(birthday_str, "%Y-%m-%d")
-            today = datetime.today()
-            return today.year - birthday.year - ((today.month, today.day) < (birthday.month, birthday.day))
-        except:
-            return None
-
 
     def score_user(user):
         score = 0
@@ -1094,7 +1109,7 @@ def matches():
     # Find mutual matches
     mutual_matches = set(liked_users).intersection(liked_by_users)
 
-    # 🧱 Exclude blocked users (either blocked by or blocked the current user)
+    # Exclude blocked users (either blocked by or blocked the current user)
     c.execute("""
         SELECT blocked FROM blocks WHERE blocker = ?
         UNION
@@ -1105,30 +1120,34 @@ def matches():
     mutual_matches = mutual_matches - blocked_usernames
 
     # Fetch details for those matched users
+    match_list = []
     if mutual_matches:
         placeholders = ",".join("?" * len(mutual_matches))
         c.execute(f"""
-            SELECT display_name, username, birthday, location, favorite_animal, profile_pic, main_tag, last_login
+            SELECT display_name, username, birthday, location, favorite_animal, profile_pic, main_tag, last_login, latitude, longitude
             FROM users WHERE username IN ({placeholders})
         """, tuple(mutual_matches))
 
-        match_list = c.fetchall()
-    else:
-        match_list = []
+        rows = c.fetchall()
+        for row in rows:
+            display_name, username, birthday, location, favorite_animal, profile_pic, main_tag, last_login, lat, lon = row
+            age = calculate_age(birthday) if birthday else "?"
+            match_list.append((display_name, username, age, location, favorite_animal, profile_pic, main_tag, last_login, lat, lon))
 
     # Sort the match list based on the selected sorting method
     if sort_by == "name":
-        match_list.sort(key=lambda x: x[0].lower())  # Sort by name
+        match_list.sort(key=lambda x: x[0].lower())
     elif sort_by == "recent":
         match_list.sort(key=lambda x: x[7] or datetime.min, reverse=True)
     elif sort_by == "distance":
-        # Assuming you have latitude/longitude for each user
         c.execute("SELECT latitude, longitude FROM users WHERE username = ?", (current_user,))
         current_coords = c.fetchone()
         current_lat, current_lon = current_coords if current_coords else (None, None)
 
         def haversine(lat1, lon1, lat2, lon2):
             from math import radians, cos, sin, sqrt, asin
+            if None in [lat1, lon1, lat2, lon2]:
+                return float('inf')
             R = 6371
             dlat = radians(lat2 - lat1)
             dlon = radians(lon2 - lon1)
@@ -1140,8 +1159,6 @@ def matches():
     conn.close()
 
     return render_template("matches.html", matches=match_list)
-
-
 
 
 @app.route("/like/<username>", methods=["POST"])

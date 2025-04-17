@@ -57,15 +57,18 @@
             {% endif %}
 
             {% if not email_verified %}
-                <div class="alert alert-warning mt-4 text-center">
-                    Your email is not verified.
-                    <a href="{{ url_for('resend_verification') }}" class="alert-link">Resend verification email</a>
-                </div>
+              <div class="alert alert-warning alert-dismissible fade show mt-4 text-center" role="alert">
+                Your email is not verified.
+                <a href="{{ url_for('resend_verification') }}" class="alert-link">Resend verification email</a>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
             {% else %}
-                <div class="alert alert-success mt-4 text-center">
-                    ✅ Your email is verified.
-                </div>
+              <div class="alert alert-success alert-dismissible fade show mt-4 text-center" role="alert">
+                ✅ Your email is verified.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
             {% endif %}
+
 
             {% if show_gender and gender %}
               <li class="list-group-item"><strong>Gender:</strong> {{ gender }}</li>
