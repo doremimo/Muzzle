@@ -207,15 +207,16 @@
               <label class="form-label"><strong>Location</strong></label><br>
               <button type="button" class="btn btn-outline-primary btn-sm text-white" onclick="requestUserLocation()">📍 Use My Location</button>
               <div id="location-status" class="form-text mt-2 text-white-50">Location not set yet.</div>
-
             </div>
 
             <!-- 🧭 Hidden Coordinates -->
             <input type="hidden" id="latitude" name="latitude">
             <input type="hidden" id="longitude" name="longitude">
 
-
-
+            <div class="mb-3">
+              <label for="profile_pic" class="form-label">Upload a Profile Picture</label>
+              <input type="file" class="form-control" name="profile_pic" id="profile_pic" accept="image/*">
+            </div>
 
             <div class="mb-3">
                 <label for="favorite_animal" class="form-label">Favorite Animal (besides dogs)</label>

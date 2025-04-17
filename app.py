@@ -165,6 +165,15 @@ def signup():
         password = request.form.get("password", "")
         dog_free = request.form.get("dog_free")
 
+        profile_pic_file = request.files.get("profile_pic")
+        profile_pic_path = ""
+
+        if profile_pic_file and allowed_file(profile_pic_file.filename):
+            filename = secure_filename(f"{username}_profile_{profile_pic_file.filename}")
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            profile_pic_file.save(filepath)
+            profile_pic_path = f'uploads/{filename}'
+
         # Validate password complexity
         import re
         if not re.match(r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}$', password):
@@ -233,7 +242,7 @@ def signup():
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
             """, (
                 username, email, hashed_password, display_name, birthday, latitude, longitude,
-                favorite_animal, dog_free_reason, "", bio,
+                favorite_animal, dog_free_reason, profile_pic_path, bio,
                 gender, sexuality, show_gender, show_sexuality, interests, main_tag, tags_string
             ))
 
@@ -573,6 +582,13 @@ def settings():
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
 
+    profile_pic_file = request.files.get("profile_pic")
+    if profile_pic_file and allowed_file(profile_pic_file.filename):
+        filename = secure_filename(f"{username}_profile_{profile_pic_file.filename}")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        profile_pic_file.save(filepath)
+        c.execute("UPDATE users SET profile_pic = ? WHERE username = ?", (f'uploads/{filename}', username))
+
     if request.method == "POST":
         # === Text fields ===
         display_name = request.form.get("display_name", "")
@@ -639,10 +655,16 @@ def settings():
         FROM users WHERE username = ?
     """, (username,))
     data = c.fetchone()
+
+    c.execute("SELECT profile_pic FROM users WHERE username = ?", (username,))
+    profile_row = c.fetchone()
+    profile_pic = profile_row[0] if profile_row else None
+
     conn.close()
 
     country_list = dict(countries_for_language("en"))
-    return render_template("settings.html", data=data, country_list=country_list)
+    return render_template("settings.html", data=data, country_list=country_list, profile_pic=profile_pic)
+
 
 
 @app.route("/complete-profile", methods=["GET", "POST"])
