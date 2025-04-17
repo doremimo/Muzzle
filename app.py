@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer
-from datetime import datetime
+from datetime import datetime, timedelta
 from country_list import countries_for_language
 
 
@@ -1155,22 +1155,40 @@ def like(username):
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
 
+    # First check if this like already exists
     c.execute("SELECT 1 FROM likes WHERE liker = ? AND liked = ?", (liker, liked))
     already_liked = c.fetchone()
 
+    # If not already liked, check like count and maybe insert
     if not already_liked:
+        now = datetime.now()
+        start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        c.execute("""
+            SELECT COUNT(*) FROM likes
+            WHERE liker = ? AND timestamp >= ?
+        """, (liker, start_of_day))
+        likes_today = c.fetchone()[0]
+
+        if likes_today >= 10:
+            conn.close()
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"error": "Daily like limit reached"}), 429
+            else:
+                flash("You’ve reached your 10 likes for today!", "warning")
+                return redirect(url_for("browse"))
+
+        # Insert new like
         c.execute("INSERT INTO likes (liker, liked) VALUES (?, ?)", (liker, liked))
         conn.commit()
         flash(f"You liked @{liked}!")
 
-    # Close DB before returning anything
     conn.close()
 
-    # Return nothing for AJAX
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return "", 204
 
     return redirect(url_for("browse"))
+
 
 
 @app.route("/unmatch/<username>", methods=["POST"])

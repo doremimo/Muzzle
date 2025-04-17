@@ -76,7 +76,8 @@ c.execute("""
     CREATE TABLE IF NOT EXISTS likes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         liker TEXT NOT NULL,
-        liked TEXT NOT NULL
+        liked TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )
 """)
 

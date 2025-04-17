@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <div id="likeLimitBanner" class="alert alert-warning text-center" style="display: none; position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 9999; max-width: 90%;">
+  <!-- JS will update this message -->
+  </div>
+
   <div class="container mt-4 pt-5">
     <!-- 🔍 Toggle & Filter Form -->
     <button class="btn btn-outline-primary btn-sm mb-3" id="topFilterToggle">🔍 Filters</button>
@@ -261,6 +265,59 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+  document.querySelectorAll('.like-btn').forEach(button => {
+  button.addEventListener('click', function (e) {
+    e.preventDefault();
+    const username = this.dataset.username;
+    const card = this.closest('.col');
+
+    fetch(`/like/${username}`, {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    }).then(response => {
+      if (response.status === 204) {
+        this.classList.add('liked');
+        this.innerText = '❤️';
+        card.classList.add('fade-out');
+        setTimeout(() => card.remove(), 400);
+      } else if (response.status === 429) {
+        showLikeLimitBanner("You’ve reached your 11 daily likes. Come back tomorrow!");
+      }
+    });
+  });
+});
+
+function showLikeLimitBanner(message) {
+  const banner = document.getElementById("likeLimitBanner");
+  banner.textContent = message;
+  banner.style.display = "block";
+    document.querySelectorAll('.like-btn').forEach(btn => {
+    btn.disabled = true;
+    btn.classList.add('disabled');
+  });
+
+  setTimeout(() => banner.style.display = "none", 5000);
+}
+
+  function showLikeLimitBanner(message) {
+  const banner = document.getElementById("likeLimitBanner");
+  banner.textContent = message;
+  banner.style.display = "block";
+
+  // 🔒 Disable all like buttons
+  document.querySelectorAll('.like-btn').forEach(btn => {
+    btn.disabled = true;
+    btn.classList.add('disabled');
+  });
+
+  // Optional: auto-hide after a while
+  setTimeout(() => banner.style.display = "none", 6000);
+}
+
+
 </script>
 {% endblock %}
 
