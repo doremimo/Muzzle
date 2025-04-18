@@ -1,4 +1,4 @@
-import os, random, sqlite3
+import os, random, sqlite3, traceback
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -47,6 +47,12 @@ def calculate_age(birthday_str):
         return today.year - birthday.year - ((today.month, today.day) < (birthday.month, birthday.day))
     except:
         return None
+
+@app.errorhandler(500)
+def internal_error(error):
+    print("500 error:", error)
+    traceback.print_exc()
+    return "Internal Server Error", 500
 
 @app.route("/")
 def home():
@@ -597,8 +603,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route("/settings", methods=["GET", "POST"])
-def settings():
+@app.route("/edit-profile", methods=["GET", "POST"])
+def edit_profile():
     if "username" not in session:
         return redirect(url_for("login"))
 
