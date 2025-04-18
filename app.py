@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime, timedelta
 from country_list import countries_for_language
+from database import setup_database
 
-
-
+setup_database()
 
 load_dotenv()
 app = Flask(__name__)
