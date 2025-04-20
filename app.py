@@ -1567,6 +1567,19 @@ def admin_stats():
 def test_mobile():
     return render_template("test_mobile.html")
 
+@app.route("/send-test-email")
+def send_test_email():
+    from flask_mail import Message
+    from app import mail  # or however you have mail set up
+
+    msg = Message("Muzzle Test Email",
+                  sender=os.environ.get("MAIL_USERNAME"),
+                  recipients=["yourtestemail@example.com"])
+    msg.body = "This is a test email from Muzzle!"
+    mail.send(msg)
+    return "Test email sent!"
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
