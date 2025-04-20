@@ -15,13 +15,15 @@ setup_database()
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
-# Configure Flask mail
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+# ✅ Configure Flask-Mail for Zoho
+app.config['MAIL_SERVER'] = 'smtp.zoho.jp'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False  # ✅ Make sure this is explicitly False
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 
@@ -1574,7 +1576,7 @@ def send_test_email():
 
     msg = Message("Muzzle Test Email",
                   sender=os.environ.get("MAIL_USERNAME"),
-                  recipients=["yourtestemail@example.com"])
+                  recipients=["doloresderksen@gmail.com"])
     msg.body = "This is a test email from Muzzle!"
     mail.send(msg)
     return "Test email sent!"
