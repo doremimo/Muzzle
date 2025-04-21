@@ -47,15 +47,18 @@ google = oauth.register(
     client_kwargs={'scope': 'openid email profile'}
 )
 
-
 def calculate_age(birthday_str):
     from datetime import datetime
     try:
+        if not birthday_str or birthday_str.strip() == "":
+            return None
         birthday = datetime.strptime(birthday_str, "%Y-%m-%d")
         today = datetime.today()
         return today.year - birthday.year - ((today.month, today.day) < (birthday.month, birthday.day))
-    except:
+    except Exception as e:
+        print("AGE CALC FAIL:", birthday_str, "->", e)
         return None
+
 
 @app.errorhandler(500)
 def internal_error(error):
@@ -93,11 +96,6 @@ def manual_login():
 
     return render_template("manual_login.html", username=request.form.get("username", ""))
 
-
-def calculate_age(birthday_str):
-    birthday = datetime.strptime(birthday_str, "%Y-%m-%d")
-    today = datetime.today()
-    return today.year - birthday.year - ((today.month, today.day) < (birthday.month, birthday.day))
 
 # Functions for reset password
 def generate_reset_token(email):
