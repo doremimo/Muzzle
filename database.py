@@ -4,6 +4,7 @@ def setup_database():
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
 
+    # Create users table with full fields
     c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,11 +30,15 @@ def setup_database():
             longitude REAL,
             email_verified INTEGER DEFAULT 0,
             last_login DATETIME,
-            is_admin INTEGER DEFAULT 0
+            is_admin INTEGER DEFAULT 0,
+
+            -- Optional future-proofing:
+            profile_completed INTEGER DEFAULT 0,
+            signup_method TEXT DEFAULT 'email'
         )
     """)
 
-    # Add new columns to store up to 5 gallery image paths
+    # Add gallery image columns if they don't exist
     new_columns = [
         "gallery_image_1 TEXT",
         "gallery_image_2 TEXT",
@@ -46,10 +51,9 @@ def setup_database():
         try:
             c.execute(f"ALTER TABLE users ADD COLUMN {col}")
         except sqlite3.OperationalError:
-            # Column might already exist if re-run
             print(f"Column already exists for error adding: {col}")
 
-    # Create a table to store reports
+    # Reports table
     c.execute("""
         CREATE TABLE IF NOT EXISTS reports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,6 +65,7 @@ def setup_database():
         )
     """)
 
+    # Blocks table
     c.execute("""
         CREATE TABLE IF NOT EXISTS blocks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,8 +75,7 @@ def setup_database():
         )
     """)
 
-
-    # Table to store likes
+    # Likes table
     c.execute("""
         CREATE TABLE IF NOT EXISTS likes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,7 +85,7 @@ def setup_database():
         )
     """)
 
-    # Table for messages
+    # Messages table
     c.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,7 +100,7 @@ def setup_database():
         )
     """)
 
-    # Create session_logs table to track login/logout activity
+    # Session logs for analytics
     c.execute("""
         CREATE TABLE IF NOT EXISTS session_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

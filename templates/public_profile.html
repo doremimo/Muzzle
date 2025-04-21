@@ -20,8 +20,6 @@
       {% endif %}
     {% endwith %}
 
-
-
     <div class="container mt-5" style="max-width: 600px;">
         <div class="card shadow">
             <div class="card-body">
@@ -30,8 +28,6 @@
                 <div class="text-center mb-3">
                     <img src="{{ url_for('static', filename=profile_pic or 'profilepics/default_profile_pic.png') }}"
                         alt="Profile Picture" class="img-thumbnail rounded" style="max-width: 150px; height: auto;">
-
-
                 </div>
 
                 <ul class="list-group list-group-flush">
@@ -39,8 +35,17 @@
                     <li class="list-group-item"><strong>Location:</strong> {{ location or "Not provided" }}</li>
                     <li class="list-group-item"><strong>Favorite Animal:</strong> {{ favorite_animal or "Not provided" }}</li>
                     <li class="list-group-item"><strong>Why I’m dog-free:</strong><br>{{ dog_free_reason or "Not specified." }}</li>
-                    <li class="list-group-item"><strong>Gender:</strong> {{ gender or "Not specified" }}</li>
+
+                    {% if show_gender and gender %}
+                      <li class="list-group-item"><strong>Gender:</strong> {{ gender }}</li>
+                    {% endif %}
+
                     <li class="list-group-item"><strong>Interests:</strong> {{ interests or "Not shared" }}</li>
+
+                    {% if show_sexuality and sexuality %}
+                      <li class="list-group-item"><strong>Orientation:</strong> {{ sexuality }}</li>
+                    {% endif %}
+
                     <li class="list-group-item"><strong>Bio:</strong><br>{{ bio or "No bio yet." }}</li>
                 </ul>
 
@@ -63,15 +68,6 @@
                         </button>
                     </div>
                 {% endif %}
-
-                {% if show_gender and gender %}
-                  <li class="list-group-item"><strong>Gender:</strong> {{ gender }}</li>
-                {% endif %}
-
-                {% if show_sexuality and sexuality %}
-                  <li class="list-group-item"><strong>Orientation:</strong> {{ sexuality }}</li>
-                {% endif %}
-
 
                 {% if main_tag %}
                     <div class="text-center mt-4">

@@ -13,7 +13,6 @@
       {% endif %}
     {% endwith %}
 
-
     <div class="card shadow">
         <div class="card-body">
             <h2 class="card-title text-center mb-4">{{ display_name or username }}</h2>
@@ -28,8 +27,17 @@
                 <li class="list-group-item"><strong>Location:</strong> {{ location or "Not provided" }}</li>
                 <li class="list-group-item"><strong>Favorite Animal:</strong> {{ favorite_animal or "Not provided" }}</li>
                 <li class="list-group-item"><strong>Why I’m dog-free:</strong><br>{{ dog_free_reason or "Not specified." }}</li>
-                <li class="list-group-item"><strong>Gender:</strong> {{ gender or "Not specified" }}</li>
+
+                {% if show_gender and gender %}
+                  <li class="list-group-item"><strong>Gender:</strong> {{ gender }}</li>
+                {% endif %}
+
                 <li class="list-group-item"><strong>Interests:</strong> {{ interests or "Not shared" }}</li>
+
+                {% if show_sexuality and sexuality %}
+                  <li class="list-group-item"><strong>Orientation:</strong> {{ sexuality }}</li>
+                {% endif %}
+
                 <li class="list-group-item"><strong>Bio:</strong><br>{{ bio or "No bio yet." }}</li>
             </ul>
 
@@ -69,15 +77,6 @@
               </div>
             {% endif %}
 
-
-            {% if show_gender and gender %}
-              <li class="list-group-item"><strong>Gender:</strong> {{ gender }}</li>
-            {% endif %}
-
-            {% if show_sexuality and sexuality %}
-              <li class="list-group-item"><strong>Orientation:</strong> {{ sexuality }}</li>
-            {% endif %}
-
             {% if main_tag %}
                 <div class="text-center mt-4">
                     <span class="badge bg-primary fs-5">{{ main_tag }}</span>
@@ -110,5 +109,3 @@
     </div>
 </div>
 {% endblock %}
-
-

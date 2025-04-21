@@ -22,21 +22,18 @@
         <form method="POST" enctype="multipart/form-data">
           <div class="mb-3">
             <label for="display_name" class="form-label">Display Name</label>
-            <input type="text" class="form-control" id="display_name" name="display_name" value="{{ data[0] or '' }}">
+            <input type="text" class="form-control" id="display_name" name="display_name" value="{{ data[2] or '' }}">
           </div>
 
-                    <!-- Username (readonly or editable) -->
           <div class="mb-3">
             <label for="username" class="form-label">Username</label>
             <input type="text" id="username" name="username" class="form-control" value="{{ data[0] or '' }}" readonly>
           </div>
 
-          <!-- Email (editable if you want) -->
           <div class="mb-3">
             <label for="email" class="form-label">Email</label>
             <input type="email" id="email" name="email" class="form-control" value="{{ data[1] or '' }}">
           </div>
-
 
           {% if profile_pic %}
             <div class="mb-3 text-center">
@@ -44,36 +41,31 @@
             </div>
           {% endif %}
 
-
           <div class="mb-3">
             <label for="profile_pic" class="form-label">Profile Picture</label>
             <input class="form-control" type="file" id="profile_pic" name="profile_pic" accept="image/*">
           </div>
 
-
           <div class="mb-3">
             <label for="birthday" class="form-label">Birthday</label>
-            <input type="date" class="form-control" id="birthday" name="birthday" value="{{ data[1] or '' }}">
+            <input type="date" class="form-control" id="birthday" name="birthday" value="{{ data[3] or '' }}">
           </div>
 
-         <!-- 🌐 Country Select -->
           <div class="mb-3">
             <label for="countrySelect" class="form-label">Country</label>
             <select id="countrySelect" name="country" class="form-select">
               <option value="">Select a country</option>
               {% for code, name in country_list.items() %}
-                <option value="{{ code|lower }}" {% if data[10] == code|lower %}selected{% endif %}>{{ name }}</option>
+                <option value="{{ code|lower }}" {% if data[15] == code|lower %}selected{% endif %}>{{ name }}</option>
               {% endfor %}
             </select>
           </div>
 
-          <!-- 🧠 Smart City Input -->
           <div class="mb-3">
             <label for="locationInput" class="form-label">City</label>
-            <input type="text" class="form-control" name="location" id="locationInput" placeholder="Enter your city..." value="{{ data[2] or '' }}">
+            <input type="text" class="form-control" name="location" id="locationInput" value="{{ data[4] or '' }}">
             <div id="citySuggestions" class="list-group mt-1"></div>
           </div>
-
 
           <!-- 📍 Use My Location -->
           <div class="mb-3">
@@ -82,120 +74,116 @@
             <div id="location-status" class="form-text mt-2 text-muted">Location not set yet.</div>
           </div>
 
-          <!-- 🧭 Hidden Coordinates -->
-          <input type="hidden" id="latitude" name="latitude" value="{{ data[3] or '' }}">
-          <input type="hidden" id="longitude" name="longitude" value="{{ data[4] or '' }}">
+
+          <input type="hidden" id="latitude" name="latitude" value="{{ data[5] or '' }}">
+          <input type="hidden" id="longitude" name="longitude" value="{{ data[6] or '' }}">
 
 
 
           <div class="mb-3">
             <label for="favorite_animal" class="form-label">Favorite Animal</label>
-            <input type="text" class="form-control" id="favorite_animal" name="favorite_animal" value="{{ data[3] or '' }}">
+            <input type="text" class="form-control" id="favorite_animal" name="favorite_animal" value="{{ data[7] or '' }}">
           </div>
 
           <div class="mb-3">
             <label for="dog_free_reason" class="form-label">Why are you dog-free?</label>
-            <textarea class="form-control" id="dog_free_reason" name="dog_free_reason" rows="2">{{ data[4] or '' }}</textarea>
+            <textarea class="form-control" id="dog_free_reason" name="dog_free_reason" rows="2">{{ data[8] or '' }}</textarea>
           </div>
 
           <div class="mb-3">
             <label for="bio" class="form-label">Short Bio</label>
-            <textarea class="form-control" id="bio" name="bio" rows="3">{{ data[5] or '' }}</textarea>
+            <textarea class="form-control" id="bio" name="bio" rows="3">{{ data[9] or '' }}</textarea>
           </div>
 
-          <div class="mb-3">
+           <div class="mb-3">
             <label class="form-label">Gender</label>
             <select name="gender" class="form-select">
-              <option value="">Prefer not to say</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Nonbinary">Nonbinary</option>
-              <option value="Trans Man">Trans Man</option>
-              <option value="Trans Woman">Trans Woman</option>
-              <option value="Other">Other</option>
+              <option value="" {% if not data[10] %}selected{% endif %}>Prefer not to say</option>
+              <option value="Male" {% if data[10] =="Male" %}selected{% endif %}>Male</option>
+              <option value="Female" {% if data[10] =="Female" %}selected{% endif %}>Female</option>
+              <option value="Nonbinary" {% if data[10] =="Nonbinary" %}selected{% endif %}>Nonbinary</option>
+              <option value="Trans Man" {% if data[10] =="TransMan" %}selected{% endif %}>Trans Man</option>
+              <option value="Trans Woman" {% if data[10] =="TransWoman" %}selected{% endif %}>Trans Woman</option>
+              <option value="Other" {% if data[10] =="Other" %}selected{% endif %}>Other</option>
             </select>
+
           </div>
 
           <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" name="show_gender" id="showGender">
-            <label class="form-check-label" for="showGender">
-              Show my gender on my public profile
-            </label>
+            <input class="form-check-input" type="checkbox" name="show_gender" id="showGender"
+                   {% if data[16] == 1 %}checked{% endif %}>
+            <label class="form-check-label" for="showGender">Show my gender on my public profile</label>
+
           </div>
 
           <div class="mb-3">
             <label class="form-label">Sexual Orientation</label>
             <select name="sexuality" class="form-select">
-              <option value="">Prefer not to say</option>
-              <option value="Straight">Straight</option>
-              <option value="Gay">Gay</option>
-              <option value="Lesbian">Lesbian</option>
-              <option value="Bisexual">Bisexual</option>
-              <option value="Pansexual">Pansexual</option>
-              <option value="Asexual">Asexual</option>
-              <option value="Queer">Queer</option>
-              <option value="Other">Other</option>
+              <option value="" {% if not data[11] %}selected{% endif %}>Prefer not to say</option>
+              <option value="Straight" {% if data[11] =="Straight" %}selected{% endif %}>Straight</option>
+              <option value="Gay" {% if data[11] =="Gay" %}selected{% endif %}>Gay</option>
+              <option value="Lesbian" {% if data[11] =="Lesbian" %}selected{% endif %}>Lesbian</option>
+              <option value="Bisexual" {% if data[11] =="Bisexual" %}selected{% endif %}>Bisexual</option>
+              <option value="Pansexual" {% if data[11] =="Pansexual" %}selected{% endif %}>Pansexual</option>
+              <option value="Asexual" {% if data[11] =="Asexual" %}selected{% endif %}>Asexual</option>
+              <option value="Queer" {% if data[11] =="Queer" %}selected{% endif %}>Queer</option>
+              <option value="Other" {% if data[11] =="Other" %}selected{% endif %}>Other</option>
             </select>
+
           </div>
 
           <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" name="show_sexuality" id="showSexuality">
-            <label class="form-check-label" for="showSexuality">
-              Show my orientation on my public profile
-            </label>
+            <input class="form-check-input" type="checkbox" name="show_sexuality" id="showSexuality"
+                   {% if data[17] == 1 %}checked{% endif %}>
+            <label class="form-check-label" for="showSexuality">Show my orientation on my public profile</label>
           </div>
 
           <div class="mb-3">
             <label for="interests" class="form-label">Interests (comma-separated)</label>
-            <input type="text" class="form-control" id="interests" name="interests" value="{{ data[7] or '' }}">
+            <input type="text" class="form-control" id="interests" name="interests" value="{{ data[12] or '' }}">
           </div>
+
+          {% set fun_tags = [
+            "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie",
+            "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy",
+            "My Pet’s a Vibe", "No Bark Zone", "Hates Loud Noises", "Bed is Sacred",
+            "No Dog Hair, No Cry", "Not Here for Doggy Breath", "My Couch > Your Dog", "Cat Yes, Dog No",
+            "Slo-Mo Pets Only", "Don’t Judge My Pet Cockroach", "Lizard Liker", "Clean House > Cute Paws",
+            "Fully Pet-Free", "Allergic to Everything"
+          ] %}
+
+          {% set serious_tags = [
+            "Child-Free", "Divorced", "Single Parent", "Parent (Don't live with kids)",
+            "Parent (Kids part-time)", "Open to Kids", "Neurodivergent", "Creative at Heart",
+            "Digital Nomad", "Career-Focused", "Just Looking for Friends", "Monogamous", "Open to ENM"
+          ] %}
+
 
           <div class="mb-3">
             <label for="main_tag" class="form-label"><strong>Main Tag</strong></label>
             <select name="main_tag" id="main_tag" class="form-select" required>
               <option value="">Choose your main tag</option>
-
-              <optgroup label="🐾 Fun & Identity Tags">
-                {% set fun_tags = [
-                  "Reptile Roomie", "Cat Companion", "Rodent Roomie", "Bird Bestie",
-                  "Fish Friend", "Turtle Tenant", "Plant Person", "Bug Buddy",
-                  "My Pet’s a Vibe", "No Bark Zone", "Hates Loud Noises", "Bed is Sacred",
-                  "No Dog Hair, No Cry", "Not Here for Doggy Breath", "My Couch > Your Dog", "Cat Yes, Dog No",
-                  "Slo-Mo Pets Only", "Don’t Judge My Pet Cockroach", "Lizard Liker", "Clean House > Cute Paws",
-                  "Fully Pet-Free", "Allergic to Everything"
-                ] %}
-                {% for tag in fun_tags %}
-                  <option value="{{ tag }}" {% if data[8] == tag %}selected{% endif %}>{{ tag }}</option>
-                {% endfor %}
-              </optgroup>
-
-              <optgroup label="🌱 Lifestyle & Values Tags">
-                {% set serious_tags = [
-                  "Child-Free", "Divorced", "Single Parent", "Parent (Don't live with kids)", "Parent (Kids part-time)", "Open to Kids", "Neurodivergent", "Creative at Heart",
-                  "Digital Nomad", "Career-Focused", "Just Looking for Friends", "Monogamous", "Open to ENM"
-                ] %}
-                {% for tag in serious_tags %}
-                  <option value="{{ tag }}" {% if data[8] == tag %}selected{% endif %}>{{ tag }}</option>
-                {% endfor %}
-              </optgroup>
+              {% for tag in fun_tags + serious_tags %}
+                <option value="{{ tag }}" {% if data[13] == tag %}selected{% endif %}>{{ tag }}</option>
+              {% endfor %}
             </select>
           </div>
 
           <div class="mb-3">
             <label class="form-label"><strong>Other Tags (Optional)</strong></label>
             <div class="row">
-              {% set selected_tags = data[9].split(",") if data[9] else [] %}
-              {% for tag in fun_tags + serious_tags if tag != data[8] %}
+              {% set selected_tags = data[14].split(",") if data[14] else [] %}
+              {% for tag in fun_tags + serious_tags if tag != data[13] %}
                 <div class="col-6 col-md-4">
                   <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="tags" value="{{ tag }}"
-                      {% if tag in selected_tags %}checked{% endif %}>
+                    <input class="form-check-input" type="checkbox" name="tags" value="{{ tag }}" {% if tag in selected_tags %}checked{% endif %}>
                     <label class="form-check-label">{{ tag }}</label>
                   </div>
                 </div>
               {% endfor %}
             </div>
           </div>
+
 
           <div class="mb-3">
             <label class="form-label"><strong>Upload Gallery Photos (up to 5)</strong></label>
@@ -204,7 +192,6 @@
             {% endfor %}
             <small class="form-text text-muted">Supported formats: JPG, PNG, GIF</small>
           </div>
-
 
           <button type="submit" class="btn btn-primary w-100">Save Changes</button>
         </form>
@@ -216,79 +203,71 @@
     </div>
   </div>
 
-<script>
-function requestUserLocation() {
-    const status = document.getElementById("location-status");
-    if (!navigator.geolocation) {
+  <script>
+    function requestUserLocation() {
+      const status = document.getElementById("location-status");
+      if (!navigator.geolocation) {
         status.textContent = "Geolocation is not supported by your browser.";
         return;
-    }
+      }
 
-    status.textContent = "Detecting location...";
+      status.textContent = "Detecting location...";
 
-    navigator.geolocation.getCurrentPosition(
+      navigator.geolocation.getCurrentPosition(
         position => {
-            const lat = position.coords.latitude.toFixed(6);
-            const lon = position.coords.longitude.toFixed(6);
-
-            document.getElementById("latitude").value = lat;
-            document.getElementById("longitude").value = lon;
-
-            status.textContent = `Location set (Lat: ${lat}, Lon: ${lon})`;
+          const lat = position.coords.latitude.toFixed(6);
+          const lon = position.coords.longitude.toFixed(6);
+          document.getElementById("latitude").value = lat;
+          document.getElementById("longitude").value = lon;
+          status.textContent = `Location set (Lat: ${lat}, Lon: ${lon})`;
         },
         error => {
-            status.textContent = "Unable to retrieve location.";
+          status.textContent = "Unable to retrieve location.";
         }
-    );
-}
-</script>
-<script>
-const input = document.getElementById("locationInput");
-const suggestions = document.getElementById("citySuggestions");
-const countrySelect = document.getElementById("countrySelect");
+      );
+    }
+  </script>
 
-input.addEventListener("input", () => {
-  const query = input.value.trim();
-  suggestions.innerHTML = "";
+  <script>
+    const input = document.getElementById("locationInput");
+    const suggestions = document.getElementById("citySuggestions");
+    const countrySelect = document.getElementById("countrySelect");
 
-  if (query.length < 3) return;
+    input.addEventListener("input", () => {
+      const query = input.value.trim();
+      suggestions.innerHTML = "";
+      if (query.length < 3) return;
 
-  const country = countrySelect.value;
-  let apiUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
-  if (country) {
-    apiUrl += `&countrycodes=${country}`;
-  }
+      let apiUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
+      if (countrySelect.value) {
+        apiUrl += `&countrycodes=${countrySelect.value}`;
+      }
 
-  fetch(apiUrl)
-    .then(res => res.json())
-    .then(data => {
-      data.forEach(place => {
-        const option = document.createElement("button");
-        option.type = "button";
-        option.className = "list-group-item list-group-item-action";
-        option.textContent = place.display_name;
-        option.addEventListener("click", () => {
-          input.value = place.display_name;
-          document.getElementById("latitude").value = place.lat;
-          document.getElementById("longitude").value = place.lon;
-          document.getElementById("location-status").textContent = `🌍 Set to: ${place.display_name}`;
-          suggestions.innerHTML = "";
+      fetch(apiUrl)
+        .then(res => res.json())
+        .then(data => {
+          data.forEach(place => {
+            const option = document.createElement("button");
+            option.type = "button";
+            option.className = "list-group-item list-group-item-action";
+            option.textContent = place.display_name;
+            option.addEventListener("click", () => {
+              input.value = place.display_name;
+              document.getElementById("latitude").value = place.lat;
+              document.getElementById("longitude").value = place.lon;
+              document.getElementById("location-status").textContent = `🌍 Set to: ${place.display_name}`;
+              suggestions.innerHTML = "";
+            });
+            suggestions.appendChild(option);
+          });
         });
-        suggestions.appendChild(option);
-      });
     });
-});
 
-document.addEventListener("click", (e) => {
-  if (!suggestions.contains(e.target) && e.target !== input) {
-    suggestions.innerHTML = "";
-  }
-});
-</script>
-
-
-
+    document.addEventListener("click", e => {
+      if (!suggestions.contains(e.target) && e.target !== input) {
+        suggestions.innerHTML = "";
+      }
+    });
+  </script>
 
 {% endblock %}
-
-

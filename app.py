@@ -24,7 +24,14 @@ app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+# Upload folders
+PROFILE_PIC_FOLDER = 'static/profilepics/'
+GALLERY_FOLDER = 'static/gallery/'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['PROFILE_PIC_FOLDER'] = PROFILE_PIC_FOLDER
+app.config['GALLERY_FOLDER'] = GALLERY_FOLDER
+
 
 
 mail = Mail(app)
@@ -187,9 +194,10 @@ def signup():
 
         if profile_pic_file and allowed_file(profile_pic_file.filename):
             filename = secure_filename(f"{username}_profile_{profile_pic_file.filename}")
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            filepath = os.path.join(app.config['PROFILE_PIC_FOLDER'], filename)
             profile_pic_file.save(filepath)
-            profile_pic_path = f'uploads/{filename}'
+            profile_pic_path = f'profilepics/{filename}'
+
 
         # Validate password complexity
         import re
@@ -219,8 +227,10 @@ def signup():
         tags = request.form.getlist("tags")
         all_tags = [main_tag] + tags
         tags_string = ",".join(tags)
+        show_gender = 1 if request.form.get("show_gender") == "on" else 0
+        show_sexuality = 1 if request.form.get("show_sexuality") == "on" else 0
 
-        # Validate that at least one pet-related tag is selected
+        # Validate that at least one pet-related tadefg is selected
         pet_tags = {
             "Fully Pet-Free", "Allergic to Everything", "Reptile Roomie", "Cat Companion",
             "Rodent Roomie", "Bird Bestie", "Fish Friend", "Turtle Tenant", "Plant Person",
@@ -356,40 +366,46 @@ def google_callback():
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
 
-    c.execute("SELECT username FROM users WHERE username = ?", (email,))
+    # Check by email since username will now be random
+    c.execute("SELECT username FROM users WHERE email = ?", (email,))
     existing_user = c.fetchone()
 
     if not existing_user:
         display_name = generate_display_name()
+        username = display_name
+
         c.execute("""
             INSERT INTO users (username, email, password, display_name, email_verified)
             VALUES (?, ?, ?, ?, 1)
-        """, (email, email, generate_password_hash("google_oauth_login"), display_name))
+        """, (username, email, generate_password_hash("google_oauth_login"), display_name))
         conn.commit()
         session["needs_profile_completion"] = True
 
-        # ✅ Send welcome email for new Google signup
+        # ✅ Send welcome email
         send_welcome_email(email)
 
         # ✅ Make first user admin
         c.execute("SELECT COUNT(*) FROM users")
         user_count = c.fetchone()[0]
         if user_count == 1:
-            c.execute("UPDATE users SET is_admin = 1 WHERE username = ?", (email,))
+            c.execute("UPDATE users SET is_admin = 1 WHERE username = ?", (username,))
+    else:
+        # Fetch the correct username for existing user
+        username = existing_user[0]
 
     # ✅ Set login time and session
     login_time = datetime.now()
-    session["username"] = email
+    session["username"] = username
     session["login_time"] = login_time.isoformat()
 
     # ✅ Check if user is admin
-    c.execute("SELECT is_admin FROM users WHERE username = ?", (email,))
+    c.execute("SELECT is_admin FROM users WHERE username = ?", (username,))
     row = c.fetchone()
     session["is_admin"] = (row[0] == 1) if row else False
 
     # ✅ Update last login + log the session
-    c.execute("UPDATE users SET last_login = ? WHERE username = ?", (login_time, email))
-    c.execute("INSERT INTO session_logs (username, login_time) VALUES (?, ?)", (email, login_time))
+    c.execute("UPDATE users SET last_login = ? WHERE username = ?", (login_time, username))
+    c.execute("INSERT INTO session_logs (username, login_time) VALUES (?, ?)", (username, login_time))
 
     conn.commit()
     conn.close()
@@ -398,6 +414,7 @@ def google_callback():
     if session.pop("needs_profile_completion", False):
         return redirect(url_for("google_terms"))
     return redirect(url_for("profile"))
+
 
 
 @app.route("/google-terms", methods=["GET", "POST"])
@@ -548,11 +565,12 @@ def profile():
         # 🧠 Get profile data
         c.execute("""
             SELECT display_name, birthday, location, favorite_animal,
-                   dog_free_reason, profile_pic, bio, gender,
-                   interests, main_tag, tags,
-                   gallery_image_1, gallery_image_2, gallery_image_3,
-                   gallery_image_4, gallery_image_5,
-                   email_verified
+       dog_free_reason, profile_pic, bio, gender, sexuality,
+       interests, main_tag, tags,
+       gallery_image_1, gallery_image_2, gallery_image_3,
+       gallery_image_4, gallery_image_5,
+       email_verified, show_gender, show_sexuality
+
             FROM users WHERE username = ?
         """, (username,))
         result = c.fetchone()
@@ -567,8 +585,9 @@ def profile():
         conn.close()
 
         (display_name, birthday, location, favorite_animal, dog_free_reason,
-         profile_pic, bio, gender, interests, main_tag, tags_string,
-         g1, g2, g3, g4, g5, email_verified) = result or (None,) * 17
+         profile_pic, bio, gender, sexuality, interests, main_tag, tags_string,
+         g1, g2, g3, g4, g5, email_verified, show_gender, show_sexuality) = result or (None,) * 20
+
         age = calculate_age(birthday) if birthday else "?"
 
         gallery_images = [g for g in [g1, g2, g3, g4, g5] if g]
@@ -585,22 +604,19 @@ def profile():
                                profile_pic=profile_pic,
                                bio=bio,
                                gender=gender,
+                               sexuality=sexuality,
                                interests=interests,
                                main_tag=main_tag,
                                tags=tags,
                                unread_count=unread_count,
                                gallery_images=gallery_images,
-                               email_verified=email_verified)
+                               email_verified=email_verified,
+                               show_gender=show_gender,
+                               show_sexuality=show_sexuality,
+                               )
 
     else:
         return redirect(url_for("login"))
-
-
-# Upload up to 5 Pictures
-UPLOAD_FOLDER = 'static/gallery/'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -617,9 +633,10 @@ def edit_profile():
     profile_pic_file = request.files.get("profile_pic")
     if profile_pic_file and allowed_file(profile_pic_file.filename):
         filename = secure_filename(f"{username}_profile_{profile_pic_file.filename}")
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        filepath = os.path.join(app.config['PROFILE_PIC_FOLDER'], filename)
         profile_pic_file.save(filepath)
-        c.execute("UPDATE users SET profile_pic = ? WHERE username = ?", (f'uploads/{filename}', username))
+        c.execute("UPDATE users SET profile_pic = ? WHERE username = ?", (f'profilepics/{filename}', username))
+
 
     if request.method == "POST":
         # === Text fields ===
@@ -666,12 +683,12 @@ def edit_profile():
         ))
 
         # === Handle gallery image uploads ===
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        os.makedirs(app.config['GALLERY_FOLDER'], exist_ok=True)
         for i in range(1, 6):
             file = request.files.get(f'gallery_image_{i}')
             if file and allowed_file(file.filename):
                 filename = secure_filename(f"{username}_gallery_{i}_{file.filename}")
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                filepath = os.path.join(app.config['GALLERY_FOLDER'], filename)
                 file.save(filepath)
                 c.execute(f"UPDATE users SET gallery_image_{i} = ? WHERE username = ?", (f'gallery/{filename}', username))
 
@@ -682,8 +699,9 @@ def edit_profile():
 
     # === GET request: load current data ===
     c.execute("""
-        SELECT display_name, birthday, location, favorite_animal, dog_free_reason,
-               bio, gender, interests, main_tag, tags, country
+        SELECT username, email, display_name, birthday, location, latitude, longitude, favorite_animal, dog_free_reason,
+       bio, gender, sexuality, interests, main_tag, tags, country, show_gender, show_sexuality
+
         FROM users WHERE username = ?
     """, (username,))
     data = c.fetchone()
@@ -696,6 +714,7 @@ def edit_profile():
 
     country_list = dict(countries_for_language("en"))
     return render_template("settings.html", data=data, country_list=country_list, profile_pic=profile_pic)
+
 
 
 
@@ -1058,9 +1077,11 @@ def view_user_profile(username):
     # Get user info
     c.execute("""
         SELECT display_name, birthday, location, favorite_animal,
-       dog_free_reason, profile_pic, bio, gender, interests, main_tag, tags,
-       gallery_image_1, gallery_image_2, gallery_image_3,
-       gallery_image_4, gallery_image_5
+        dog_free_reason, profile_pic, bio, gender, sexuality, interests, main_tag, tags,
+        gallery_image_1, gallery_image_2, gallery_image_3,
+        gallery_image_4, gallery_image_5,
+        show_gender, show_sexuality
+
         FROM users WHERE username = ?
     """, (username,))
     result = c.fetchone()
@@ -1072,8 +1093,9 @@ def view_user_profile(username):
         return redirect(url_for("browse"))
 
     (display_name, birthday, location, favorite_animal, dog_free_reason,
-     profile_pic, bio, gender, interests, main_tag, tags_string,
-     g1, g2, g3, g4, g5) = result or (None,) * 16
+     profile_pic, bio, gender, sexuality, interests, main_tag, tags_string,
+     g1, g2, g3, g4, g5, show_gender, show_sexuality) = result or (None,) * 18
+
     age = calculate_age(birthday) if birthday else "?"
 
     gallery_images = [g for g in [g1, g2, g3, g4, g5] if g]
@@ -1089,10 +1111,14 @@ def view_user_profile(username):
                            profile_pic=profile_pic,
                            bio=bio,
                            gender=gender,
+                           sexuality=sexuality,
                            interests=interests,
                            main_tag=main_tag,
                            tags=tags,
-                           gallery_images=gallery_images)
+                           gallery_images=gallery_images,
+                           show_gender=show_gender,
+                           show_sexuality=show_sexuality,
+                           )
 
 
 
