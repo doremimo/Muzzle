@@ -26,9 +26,10 @@
           </div>
 
           <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <input type="text" id="username" name="username" class="form-control" value="{{ data[0] or '' }}" readonly>
+            <label for="new_username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="new_username" name="new_username" value="{{ data[0] }}" required>
           </div>
+
 
           <div class="mb-3">
             <label for="email" class="form-label">Email</label>

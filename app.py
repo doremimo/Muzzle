@@ -343,17 +343,44 @@ def google_login():
     return google.authorize_redirect(redirect_uri)
 
 def generate_display_name():
-    adjectives = ["Bold", "Witty", "Chill", "Thick", "Sly", "Clever",
-                  "Gentle", "Zesty", "Brave", "Loyal", "Sleepy", "Hyperactive",
-                  "Bouncy", "Inflatable", "The", "Endangered", "Immortal", "Real", "Lefthanded",
-                  "Assistant", "Crusty", "Feral", "Wandering", "Lucky", "Unstoppable", "Lonely",
-                  "Single", "Professional", "Legendary", "Part-time", "Little", "Big"]
+    adjectives = [
+        "Bold", "Witty", "Chill", "Thick", "Sly", "Clever",
+        "Gentle", "Zesty", "Brave", "Loyal", "Sleepy", "Hyperactive",
+        "Bouncy", "Inflatable", "The", "Endangered", "Immortal", "Real", "Lefthanded",
+        "Assistant", "Crusty", "Feral", "Wandering", "Lucky", "Unstoppable", "Lonely",
+        "Single", "Professional", "Legendary", "Part-time", "Little", "Big",
+        "Awkward", "Electric", "Quantum", "Cursed", "Shiny", "Suspicious",
+        "Curious", "Grumpy", "Haunted", "Speedy", "Snacky", "Mysterious", "Buff",
+        "Quantum", "Loopy", "Obscure", "Nocturnal", "Unicorned", "Educated", "Entitled",
+        "Radical", "Spicy", "Sweet", "Salty", "Delusional", "Enlightened", "Jaded"
+    ]
+
     animals = [
         "Koala", "Gecko", "Iguana", "Cat", "Turtle", "Ferret", "Fox", "Hedgehog",
         "Rabbit", "Tiger", "Giraffe", "Penguin", "Llama", "Otter", "Snake", "Platypus",
-        "Tarantula", "Spider", "Lizard", "Dragon"
+        "Tarantula", "Spider", "Lizard", "Dragon", "Owl", "Axolotl", "Chameleon",
+        "Sloth", "Fennec", "Panther", "Panda", "Frog", "Skink", "Mantis", "Octopus",
+        "Kangaroo", "Newt", "Moth", "Caterpillar", "Raccoon", "Possum", "Snail",
+        "Gekko", "Jackalope", "Phoenix", "Tapir", "Capybara", "Shrimp", "Mole",
+        "Stingray", "Cobra", "Worm", "Beetle", "Cricket", "Phoenix", "LochNessMonster",
+        "Unicorn", "Basilisk", "Kraken", "Cerberus", "Pegasus", "Chimera", "Hydra",
+        "Sphinx", "Yeti", "Faun", "Mermaid", "Minotaur", "Gorgon", "Banshee", "Tanuki",
+        "Qilin", "Zhulong", "Viper", "NineTailedFox"
     ]
+
     return random.choice(adjectives) + random.choice(animals)
+
+def generate_username(base_name):
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    while True:
+        random_number = random.randint(100, 999)
+        new_username = f"{base_name}{random_number}"
+        c.execute("SELECT 1 FROM users WHERE username = ?", (new_username,))
+        if not c.fetchone():
+            conn.close()
+            return new_username
+
 
 @app.route('/login/google/callback')
 def google_callback():
@@ -370,7 +397,7 @@ def google_callback():
 
     if not existing_user:
         display_name = generate_display_name()
-        username = display_name
+        username = generate_username(display_name)
 
         c.execute("""
             INSERT INTO users (username, email, password, display_name, email_verified)
@@ -479,6 +506,17 @@ def confirm_verification_token(token, expiration=3600):
     except:
         return False
     return email
+
+@app.route("/check-username")
+def check_username():
+    username = request.args.get("username", "").strip()
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE username = ?", (username,))
+    taken = c.fetchone() is not None
+    conn.close()
+    return jsonify({"taken": taken})
+
 
 # Sending the verification
 from flask_mail import Message
@@ -638,6 +676,7 @@ def edit_profile():
 
     if request.method == "POST":
         # === Text fields ===
+        new_username = request.form.get("new_username", "").strip()
         display_name = request.form.get("display_name", "")
         birthday = request.form.get("birthday")
         location = request.form.get("location", "")
@@ -666,6 +705,20 @@ def edit_profile():
             flash("You must select at least one pet-related tag.", "danger")
             conn.close()
             return redirect(url_for("settings"))
+
+        # === Check username availability ===
+        if new_username != username:
+            c.execute("SELECT 1 FROM users WHERE username = ?", (new_username,))
+            if c.fetchone():
+                flash("Username already taken.", "danger")
+                conn.close()
+                return redirect(url_for("settings"))
+
+            # ✅ Update username in DB
+            c.execute("UPDATE users SET username = ? WHERE username = ?", (new_username, username))
+            session["username"] = new_username
+            username = new_username  # update for subsequent DB updates
+
 
         # === Update profile info ===
         c.execute("""
